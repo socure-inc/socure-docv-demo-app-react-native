@@ -1,0 +1,23 @@
+{
+  "name": "DocVReactNativeSample",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "react": "17.0.2",
+    "react-native": "0.68.2",
+    "@socure-inc/docv-react-native": "3.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.10",
+    "@babel/runtime": "^7.18.9",
+    "@react-native-community/eslint-config": "^3.1.0",
+    "metro-react-native-babel-preset": "^0.72.1"
+  }
+}
