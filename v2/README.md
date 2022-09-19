@@ -2,6 +2,8 @@
 
 # Version: 1.1.0 - Release Date : Feb 2022
 
+> **Note:** The code in this GitHub repo is for integrating with the DocV SDK v2 React Native bridge. We strongly recommend that you install the latest DocV SDK v3 for React Native via NPM to integrate with the most recent version. See the [React Native Sample App GitHub repo](https://github.com/socure-inc/socure-docv-demo-app-react-native) for more information.   
+
 The Socure SDK React Native bridge allows developers to use React to call the Socure Document
 Verification SDK. We provide both Android and iOS native library variants.
 
@@ -59,7 +61,7 @@ buildscript {
               .....
             ext {
                  ....
-                 minSdkVersion = 22
+                 minSdkVersion = 22 
                  .....
             }
       }
@@ -72,10 +74,8 @@ allprojects {
          repositories {
               mavenCentral()
               .....
-
-              jcenter()
+              jcenter() 
               maven { url 'https://www.jitpack.io' }
-
               .....
          }
       }
@@ -85,22 +85,15 @@ allprojects {
 
 ```
 buildscript {
-
                 .....
-
                dependencies {
-
                   .....
-
                   classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:x.x.x"
-
                }
-
            }
 ```
 
 > **Note:** Socure has tested the build with plugin version 1.3.61.
-
 
 **Step 3:**
 
@@ -116,7 +109,6 @@ dependencies {
 ```
 
 > **Note:** Socure has tested the build with plugin version 1.3.61.
-
 **Step 4:**
 
 In the `(<root project dir>/android/gradle.properties)` file add the following:
@@ -135,7 +127,6 @@ shown below:
 ```
 <manifest ......
    xmlns:tools="http://schemas.android.com/tools" >
-
 <application
     .....
     tools:replace="android:allowBackup, ...., attr">
@@ -148,9 +139,7 @@ Add the Socure public key provided to you in the main module's `() strings.xml`:
 
 ```
 <resources>
-
    <string name="socurePublicKey" translatable="false">REPLACE ME</string>
-
 </resources>
 ```
 
@@ -190,7 +179,6 @@ enable_user_defined_build_types!
 
 ```
 # Pods for SocureSdk
-
 pod 'SocureSdk', :build_type => :dynamic_framework, :git =>'git@github.com:socure-inc/socure-docv-sdk-ios.git'
 ```
 
@@ -229,24 +217,19 @@ iOS app inside `<dict>` tag:
 
 ```
 <dict>
-
 ..........
-
 ..........
 <key>NSCameraUsageDescription</key>
 <string></string>
-
 ........
-
 .........
-
 </dict>
 ```
 
 Alternatively, you can add the following permissions by opening `info.plist` in Xcode:
 
 | Feature  | Key
-| -------- | ------------------------------------------------
+| -------- | ------------------------------------------------ 
 | Camera   | Privacy - Camera Usage Description
 
 **Step 4:**
@@ -348,7 +331,7 @@ passportResult?.barcodeData?.let{ barcodeContent ->
       barcode.putString(“state”, barcodeContent.state ?: “”)
       response.putMap(“barcode”, barcode)
     }
-    passportResult?.mrzData?.let { mrzContent ->
+    passportResult?.mrzData?.let { mrzContent -> 
       val mrz: WritableMap = Arguments.createMap()
       mrz.putString(“address”, mrzContent.address ?: “”)
       mrz.putString(“city”, mrzContent.city ?: “”)
