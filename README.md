@@ -1,486 +1,317 @@
-# Socure DocV SDK React Native Bridge
+# Predictive DocV SDK v3 React Native
 
-# Version: 1.1.0 - Release Date : Feb 2022
-
-The Socure SDK React Native bridge allows developers to use React to call the Socure Document
-Verification SDK. We provide both Android and iOS native library variants.
-
-This guide covers the integration within React, as well as React Native implementation on iOS and
-Android.
+The Predictive Document Verification (DocV) SDK v3 for React Native is a React Native wrapper that allows you to use the DocV SDK for Android and iOS in your React Native application. 
 
 ## Minimum Requirements
 
-iOS 12 and above
+**React Native**
 
-Android SDK version 22
+- React Native CLI. See the [React Native docs](https://reactnative.dev/docs/environment-setup) for instructions on how to set up your development environment. 
 
-| Feature                           | Android Minimum Requirements |
-| --------------------------------- | -------------------- |
-| Document and Selfie Auto Capture       | Android 8 and above     |
+**iOS**
 
-| Feature                           | iOS Minimum Requirements |
-| --------------------------------- | -------------------- |
-| Document and Selfie Capture       | iOS 12 and above     |
-| Barcode Data Extraction on Device | iOS 12 and above     |
-| MRZ Data Extraction on Device     | iOS 13 and above     |
+- Support for iOS 13 and later
+- Xcode version 13+
 
-## Installation
+**Android**
 
-### Android
+- Android SDK Version 22 (OS Version 5.1) and later
+- Android SDK is compiled with `compileSdkVersion` 32 and Java 11
 
-**Step 1:**
+## Getting started
 
-Add the following dependency to `package.json`:
+To get started, complete the steps in the following sections:  
 
-```
-"dependencies":{
-....,
-"rn-socure-sdk": "git+ssh://git@github.com:socure-inc/socure-docv-wrapper-react-native.git"
-}
-```
+- [Install the React Native wrapper with NPM](#install-the-react-native-wrapper-with-npm)
+- [Configure your iOS or Android app](#configure-your-ios-or-android-app)
+- [Import and launch the SDK](#import-and-launch-the-sdk)
 
-Optional Github Personal Access Token Implementation (https://github.com/settings/tokens)
+## Install the React Native wrapper with NPM
+
+In your React Native project, install the DocV React Native wrapper by running the following NPM command:
 
 ```
-"dependencies":{
-....,
-    "rn-socure-sdk": "git+https://<Personal_access_token>@github.com/socure-inc/socure-docv-wrapper-react-native.git"
-}
+npm install @socure-inc/docv-react-native
 ```
 
-**Step 2:**
+## Configure your iOS or Android app
 
-Open the Android `build.gradle` `(<root project dir>/android/build.gradle)` and add the following:
+Your React Native project needs to access the DocV iOS or Android SDKs through the React Native wrapper. Follow the instructions in the drop down menus below to integrate the DocV SDK into your iOS or Android app. 
 
-* Set the `minSdkVersion` to 22:
+<br />
+
+<details>
+  <summary><b>Integrate with the DocV iOS SDK</b></summary>
+
+<br />
+
+### Configure your iOS app
+
+For the iOS app, you can install the DocV iOS SDK into your project using Cocoapods. If you do not already have the CocoaPods tool installed, see the [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html#installation). 
+
+#### Add project dependencies
+
+In your root project folder, open your Podfile with a text editor and specify the following project dependencies: 
+
+- Replace the deployment target with `platform :ios, '13.0'`.
+- Add the line pod `'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'`
+
+Once completed, your Podfile should look like the following example: 
+
+```swift {4,36}
+require_relative '../node_modules/react-native/scripts/react_native_pods'
+require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+
+platform :ios, '13.0'
+install! 'cocoapods', :deterministic_uuids => false
+
+production = ENV["PRODUCTION"] == "1"
+
+target 'SocureDocVDemo' do
+  config = use_native_modules!
+
+  # Flags change depending on the env values.
+  flags = get_default_flags()
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # to enable hermes on iOS, change `false` to `true` and then install pods
+    :production => production,
+    :hermes_enabled => flags[:hermes_enabled],
+    :fabric_enabled => flags[:fabric_enabled],
+    :flipper_configuration => FlipperConfiguration.enabled,
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  target 'SocureDocVDemoTests' do
+    inherit! :complete
+    # Pods for testing
+  end
+
+  post_install do |installer|
+    react_native_post_install(installer)
+    __apply_Xcode_12_5_M1_post_install_workaround(installer)
+  end
+
+pod 'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'
+
+end
+```
+
+#### Install the dependencies
+
+Change the location of your working directory to the `iOS` folder: 
 
 ```
+cd ios
+```
+
+Install the Cocoapods dependencies by running the following command: 
+
+```
+pod install
+```
+
+#### Use the CocoaPods-generated `.xcworkspace` file
+
+The CocoaPods installation command generates a `.xcworkspace` file with all the dependencies configured. To continue with the installation, complete the following: 
+
+- Close Xcode and then open your project's `.xcworkspace` file to launch Xcode. From now on, use the `.xcworkspace` to open your project. 
+- Check that your deployment target is set to iOS 13 or later. 
+
+#### Request camera permissions
+
+The DocV iOS SDK requires a device's camera permission to capture identity documents. Upon the first invocation of the SDK, the app will request camera permission from the consumer. If the app does not already use the camera, you must add the following to the app’s `Info.plist file`: 
+
+| Key                                | Type   | Value                                                                                       |
+|------------------------------------|--------|---------------------------------------------------------------------------------------------|
+| Privacy - Camera Usage Description | String | "This application requires use of your camera in order to capture your identity documents." |
+
+
+> **Note:** We recommend you check for camera permission before calling the SocureDocV SDK’s launch API. 
+
+### Run the app
+
+Using the command line, go to your root project folder and enter the following command to run the app: 
+
+```
+"react-native run-ios"
+```
+
+</details>
+
+<details>
+  <summary><b>Integrate with the DocV Android SDK</b></summary>
+
+<br />
+  
+### Configure your Android app
+
+For the Android app, add your project dependencies by going to the module level `build.gradle` file and making sure the `minSdkVersion` is set to at least 22 and the `compileSdkVersion` is set to at least 32. 
+
+```kotlin {5,6}
 buildscript {
               .....
             ext {
                  ....
-                 minSdkVersion = 22
-                 .....
-            }
-      }
-```
-
-* Add `jcenter()` and `jitpack` repositories to `allprojects` section:
-
-```
-allprojects {
-         repositories {
-              mavenCentral()
-              .....
-
-              jcenter()
-              maven { url 'https://www.jitpack.io' }
-
-              .....
-         }
-      }
-```
-
-* Ensure `Kotlin` plugin is added in the `dependencies` section:
-
-```
-buildscript {
-
+                minSdkVersion = 22 
+                compileSdkVersion = 32
                 .....
-
-               dependencies {
-
-                  .....
-
-                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:x.x.x"
-
-               }
-
-           }
-```
-
-> **Note:** Socure has tested the build with plugin version 1.3.61.
-
-
-**Step 3:**
-
-In the main module `(<root project dir>/android/app/build.gradle)` add the below dependency
-in `dependencies {}` section:
-
-```
-dependencies {
-   .....
-   implementation "org.jetbrains.kotlin:kotlin-stdlib:x.x.x"
-   .....
+            }
 }
 ```
 
-> **Note:** Socure has tested the build with plugin version 1.3.61.
+### Camera permissions
 
-**Step 4:**
+The DocV Android SDK requires camera permission to capture identity documents. Upon the first invocation of the SDK, your app will request camera permission from the user.
 
-In the `(<root project dir>/android/gradle.properties)` file add the following:
+> **Note:** We recommend you check for camera permissions before calling the Socure DocV SDK’s launch API. 
 
-```
-username=Socure
-authToken=Socure
-```
+#### Required permissions
 
-**Step 5:**
-
-In the `AndroidManifest.xml` file `(<root project dir>/android/app/src/main/AndroidManifest.xml)`,
-replace any conflicting `manifest <application>` attribute that is breaking the manifest merger, as
-shown below:
+Ensure that your app manifest has been set up properly to request the following required permissions:
 
 ```
-<manifest ......
-   xmlns:tools="http://schemas.android.com/tools" >
+<uses-feature android:name="android.hardware.camera" />
 
-<application
-    .....
-    tools:replace="android:allowBackup, ...., attr">
-</application>
+<!-- Declare permissions -->
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 ```
 
-**Step 6:**
+## Run the app
 
-Add the Socure public key provided to you in the main module's `() strings.xml`:
-
-```
-<resources>
-
-   <string name="socurePublicKey" translatable="false">REPLACE ME</string>
-
-</resources>
-```
-
-**Step 7:**
-
-Build and run:
-
-* Run `yarn install`.
-* Run `react-native run-android` from the root folder.
-
-### iOS
-
-**Before you begin:**
-
-Install `cocoapods-user-defined-build-types`.
-
-Since the Socure Document Verification SDK is an XCFramework, CocoaPods doesn’t easily allow dynamic
-frameworks to intermingle with static libraries. This gem modifies CocoaPods to allow both to exist
-at the same time. Follow the instructions
-at https://github.com/joncardasis/cocoapods-user-defined-build-types.
-
-**Step 1:**
-
-Install Socure SDK React Native Bridge using CocoaPods (recommended).
-
-The SDK can be added to the project by adding the following items to
-your `Podfile` `(<root>/ios/Podfile)`.
-
-* Above your `(target 'ProjectName' do)`, add the following:
+From the command line, go to your root project folder and enter the following command to run the app: 
 
 ```
-plugin 'cocoapods-user-defined-build-types'
-enable_user_defined_build_types!
+react-native run-android
 ```
 
-* Inside your `(target 'ProjectName' do)`, add the corresponding `pod` lines:
+</details>
 
-```
-# Pods for SocureSdk
+<br />
 
-pod 'SocureSdk', :build_type => :dynamic_framework, :git =>'git@github.com:socure-inc/socure-docv-sdk-ios.git'
-```
+## Import and launch the SDK
 
-Optional Personal Access Token Implementation for CocoaPods (https://github.com/settings/tokens)
+After you have installed the DocV SDK React Native wrapper using NPM and configured your iOS or Android app, add the following code to your `App.js` file to import `launchSocureDocV`:
 
-```
-pod 'SocureSdk', :build_type => :dynamic_framework, :git =>'https://<Personal_access_token>@github.com/socure-inc/socure-docv-sdk-ios.git'
+```jsx
+import { launchSocureDocV } from "@socure-inc/docv-react-native"
 ```
 
-* Change target version to "12".
+To launch the Socure DocV SDK, specify your SDK key and call the `launchSocureDocV` launch function: 
 
-`platform :ios, '12.0'` <= Please set it to 12
-
-* Update your pods by running the following code in terminal from the iOS folder:
-
-`pod install`
-
-**Step 2:**
-
-Add API Keys.
-
-On your native iOS app, you will need to extract your SDK key from the Socure admin dashboard and
-use the same in the `(<root>/ios/<projectName>/info.plist)info.plist` file of your application.
-
-```
-<key>socurePublicKey</key>
-<string>REPLACE ME</string>
+```jsx
+launchSocureDocV("SOCURE_SDK_KEY", flow, onSuccess, onError);
 ```
 
-**Step 3:**
+## How it works
 
-Add Permissions for Camera and Photo Use**
+Your React Native application initializes and communicates with the DocV SDK through the React Native wrapper using the `launchSocureDocV` instance. The `launchSocureDocV` function also includes two callback functions, one for `onSuccess` and one for `onError`. See [Response callbacks](#response-callbacks) below for more information.  
 
-Add the following permissions to `info.plist(<root>/ios/<projectName>/info.plist>)` on your native
-iOS app inside `<dict>` tag:
+The following table lists the available `launchSocureDocV` properties:
 
-```
-<dict>
+| Argument           | Description                                                                                                                                                                                                                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `socure_sdk_key`   | The unique SDK key obtained from Admin Dashboard. For more information on SDK keys, see the [Getting Started](https://developer.socure.com/docs/) article.                                                                                                                          |
+| `flow`           | An optional JSON string or null value that specifies a custom flow. The `FLOW_NAME` value specifies the name of the flow (created in Admin Dashboard) that the DocV SDK should use.  <br /> <br />`JSON.stringify({flow: {name: “FLOW_NAME”}})` <br /> <br />If the value is `null`, the DocV SDK will fetch the default flow from Admin Dashboard. |  |   |
+| `onSuccess`      | A callback function that notifies you when the flow completes successfully.                                                                                                                                                                                                                                                                                               |   |   |
+| `onError`        | A callback function that notifies you when the flow fails.                                                                                                                                                                                                                                                                                                |   |   |
 
-..........
+                                                                                
+## Response callbacks
 
-..........
-<key>NSCameraUsageDescription</key>
-<string></string>
+Your app can receive a response callback from the Socure DocV SDK when the flow completes successfully or returns with an error using the `onSuccess` and `onError` callback functions.
 
-........
+### `onSuccess` response
+When the consumer successfully completes the flow and the captured images are uploaded, the `onSuccess` callback receives the ScannedData object which contains session information and the extracted data. The table below lists the available `ScannedData` properties.
 
-.........
+| Result Field   | Type        | Description                                                                                                                                                                                          |
+|----------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `docUUID`        | string      | The UUID for the uploaded scanned images.                                                                                                                                                             |
+| `sessionId`      | string      | The session ID for the scan session.                                                                                                                                                                 |
+| `extractedData`  | JSON object | Contains extractedInfo from the barcode or MRZ.                                                                                                                                                      |
+| `captureData`    | JSON object | The mapped capture type for every scan. <br /> Possible keys are: `lic_front`, `lic_back`, `passport`, `selfie` <br /> Possible values can be `manual` or `auto`                                                              |
+| `capturedImages` | JSON object | The mapped image data of captured images. <br /> Possible keys are: `lic_front`, `lic_back`, `passport`, `selfie` <br />  Value will be a base64 image string <br />**Note**: Prefix `data:image/png;base64,` while using base64 string. |
 
-</dict>
-```
-
-Alternatively, you can add the following permissions by opening `info.plist` in Xcode:
-
-| Feature  | Key
-| -------- | ------------------------------------------------
-| Camera   | Privacy - Camera Usage Description
-
-**Step 4:**
-
-* Run `react-native run-ios`.
-
-## Example
-
-In the `Example` folder there is an implementation of a React Native app that uses the Socure
-Document Verification SDK for both ID card documents and passport documents, and uploads the
-retrieved image to Socure’s services.
-
-Don't forget to execute `npm install` on both the root folder and the `Example` folder before
-running the example projects.
-
-### Caution
-
-If your  `main.jsbundle`  is missing, simply run `npm run build:ios` on the `Example` folder
-
-## Usage
-
-### Scanning a License
-
-Import the Socure package from `rn-socure-sdk`; Call `Socure.scanLicense()`, it returns a “promise”
-which can then be managed with an `async/await` call or with a `.then` call.
-
-Example:
-
-```
-Socure.scanLicense().then((res) => {
-      navigation.navigate(‘ScannedInformation’, res);
-    });
-```
-
-This is how you read the data returned upon a successful execution:
-
-```
-licenseResult?.barcodeData?.let{ barcodeContent ->
-      val barcode: WritableMap = Arguments.createMap()
-      barcode.putString(“address”, barcodeContent.address ?: “”)
-      barcode.putString(“city”, barcodeContent.city ?: “”)
-      barcode.putString(“country”, barcodeContent.country ?: “”)
-      barcode.putString(“documentNumber”, barcodeContent.documentNumber ?: “”)
-      barcode.putString(“firstName”, barcodeContent.firstName ?: “”)
-      barcode.putString(“surName”, barcodeContent.surName ?: “”)
-      barcode.putString(“fullName”, barcodeContent.fullName)
-      barcode.putString(“phone”, barcodeContent.phone ?: “”)
-      barcode.putString(“postalCode”, barcodeContent.postalCode ?: “”)
-      barcode.putString(“state”, barcodeContent.state ?: “”)
-      barcode.putString(“dob”, barcodeContent.DOB.toString() ?: “”)
-      response.putMap(“barcode”, barcode)
-    }
-    licenseResult?.idmrzData?.let { mrzContent -> {
-      val mrz: WritableMap = Arguments.createMap()
-      mrz.putString(“address”, mrzContent.address ?: “”)
-      mrz.putString(“city”, mrzContent.city ?: “”)
-      mrz.putString(“country”, mrzContent.issuingCountry ?: “”)
-      mrz.putString(“documentNumber”, mrzContent.documentNumber ?: “”)
-      mrz.putString(“firstName”, mrzContent.firstName ?: “”)
-      mrz.putString(“surName”, mrzContent.surName ?: “”)
-      mrz.putString(“fullName”, mrzContent.fullName ?: “”)
-      mrz.putString(“phone”, mrzContent.phone ?: “”)
-      mrz.putString(“postalCode”, mrzContent.postalCode ?: “”)
-      mrz.putString(“state”, mrzContent.state ?: “”)
-      mrz.putString(“nationality”, mrzContent.nationality ?: “”)
-      mrz.putString(“sex”, mrzContent.sex ?: “”)
-      response.putMap(“mrz”, mrz)
-    } }
-    response.putString(“type”, licenseResult?.documentType?.name ?: “UNKNOWN”)
+#### Sample `onSuccess` response
+```json
+{
+  "docUUID": "UUID for the uploaded scanned images",
+  "sessionId": "Session ID for the particular scan session",
+  "extractedData": {
+    "address": "123 TAYLOR AVE",
+    "issueDate": "09282007",
+    "parsedAddress": {
+      "city": "SAN BRUNO",
+      "country": "USA",
+      "physicalAddress": "123 TAYLOR AVE",
+      "physicalAddress2": "SAN BRUNO",
+      "postalCode": "940660000",
+      "state": "CA"
+    },
+    "dob": "07221977",
+    "documentNumber": "D12345",
+    "expirationDate": "07222022",
+    "firstName": "SAM",
+    "fullName": "SAM SOTO",
+    "type": "barcode"
+  },
+  "captureData": {
+    "lic_front": "auto",
+    "lic_back": "auto",
+    "passport": "auto",
+    "selfie": "manual"
+  },
+  "capturedImages": {
+    "lic_front": "base64 Image as String",
+    "lic_back": "base64 Image as String",
+    "selfie": "base64 Image as String"
+  }
+}
 ```
 
-### Scanning a Passport
+### `onError` response
 
-Import the Socure package from `rn-socure-sdk`;
+If the consumer exits the flow without completing it or the SDK encounters an error, the `onError` callback receives the `ScanError` object which contains session information and the error. The table below lists the available `ScanError` properties.
 
-Call `Socure.scanPassport()`. It returns a “promise” which can then be managed with an `async/await`
-call or with a `.then` call.
+| Error Field    | Type        | Description                                                                                                                                                                                                          |
+|----------------|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `capturedImages` | JSON object | The mapped image data of captured images (if available). <br /> Possible keys are: `lic_front`, `lic_back`, `passport`, `selfie` <br /> Value will be a base64 image string <br /> **Note**: Prefix `data:image/png;base64,` while using base64 string. |
+| `errorMessage`   | string      | The error code description.                                                                                                                                                                                          |
+| `sessionId`      | string      | The session ID for the particular scan session.                                                                                                                                                                      |
+| `statusCode`     | string      | The error code returned by Socure DocV SDK.                                                                                                                                                                          |
 
-```
-Socure.scanPassport().then((res) => {
-      navigation.navigate(‘ScannedInformation’, res);
-});
-```
-
-Here is how to read the data that returns upon successful execution:
-
-```
-passportResult?.barcodeData?.let{ barcodeContent ->
-      val barcode: WritableMap = Arguments.createMap()
-      barcode.putString(“address”, barcodeContent.address ?: “”)
-      barcode.putString(“city”, barcodeContent.city ?: “”)
-      barcode.putString(“country”, barcodeContent.country ?: “”)
-      barcode.putString(“documentNumber”, barcodeContent.documentNumber ?: “”)
-      barcode.putString(“firstName”, barcodeContent.firstName ?: “”)
-      barcode.putString(“surName”, barcodeContent.surName ?: “”)
-      barcode.putString(“fullName”, barcodeContent.fullName ?: “”)
-      barcode.putString(“phone”, barcodeContent.phone ?: “”)
-      barcode.putString(“postalCode”, barcodeContent.postalCode ?: “”)
-      barcode.putString(“state”, barcodeContent.state ?: “”)
-      response.putMap(“barcode”, barcode)
-    }
-    passportResult?.mrzData?.let { mrzContent ->
-      val mrz: WritableMap = Arguments.createMap()
-      mrz.putString(“address”, mrzContent.address ?: “”)
-      mrz.putString(“city”, mrzContent.city ?: “”)
-      mrz.putString(“country”, mrzContent.issuingCountry ?: “”)
-      mrz.putString(“documentNumber”, mrzContent.documentNumber ?: “”)
-      mrz.putString(“firstName”, mrzContent.firstName ?: “”)
-      mrz.putString(“surName”, mrzContent.surName ?: “”)
-      mrz.putString(“fullName”, mrzContent.fullName ?: “”)
-      mrz.putString(“phone”, mrzContent.phone ?: “”)
-      mrz.putString(“postalCode”, mrzContent.postalCode ?: “”)
-      mrz.putString(“state”, mrzContent.state ?: “”)
-      mrz.putString(“nationality”, mrzContent.nationality ?: “”)
-      mrz.putString(“sex”, mrzContent.sex ?: “”)
-      mrz.putString(“dob”, mrzContent.dob.toString() ?: “”)
-      response.putMap(“mrz”, mrz)
-    }
-    response.putString(“type”, passportResult?.documentType?.name ?: “UNKNOWN”)
+#### Sample `onError` response
+```json
+{
+  "capturedImages": {
+    "passport": "base64 Image as String"
+  },
+  "errorMessage": "Scan canceled by the user",
+  "sessionId": "2a55f9-42bgfa-4fb3-9gf32e-6a6fec5",
+  "statusCode": "7104"
+}
 ```
 
-### Taking a Selfie
+### Error codes
 
-Import the Socure package from `rn-socure-sdk`;
+The following table lists the errors that can be returned by Socure DocV SDK:
 
-Call `Socure.captureSelfie()`, it returns a “promise” which can then be managed with
-an `async/await` call or with a `.then` call.
-
-```
-Socure.captureSelfie().then((res) => {
-      navigation.navigate(‘UploadData’);
-    });
-```
-
-Here is how to read the data that returns upon successful execution:
-
-```
-selfieResponse.putString(“type”, “SELFIE”)
-    selfieResponse.putString(“image”, Base64.encodeToString(selfieResult?.imageData, Base64.DEFAULT)  ?: “”)
-```
-
-### Submission and Validation
-
-Import the Socure package from `rn-socure-sdk`;
-
-Call `Socure.uploadScannedInfo()`, it returns a “promise” which can then be managed with
-an `async/await` call or with a `.then` call.
-
-```
-Socure.uploadScannedInfo().then((res) => {
-      setUploadReferenceId(res.referenceId);
-      setUploadUuid(res.uuid);
-    }).catch((error) => {
-      setError(error.message);
-    });
-```
-
-Here is how to read the data that returns upon successful execution:
-
-```
- uploadResponse.putString(“type”, “upload_success”)
-    result?.let {
-      uploadResponse.putString(“referenceId”, it.referenceId)
-      uploadResponse.putString(“uuid”, it.uuid)
-    }
-```
-
-### Showing the captured license image
-
-Import the Socure package from `rn-socure-sdk`;
-
-Call `Socure.getScannedLicense()`, it returns a “promise” which can then be managed with
-an `async/await` call or with a `.then` call.
-
-```
-Socure.getScannedLicense().then((res) => {
-    setFrontImage(`data:image/png;base64,${res.frontImage}`);
-    setBackImage(`data:image/png;base64,${res.backImage}`);
-})
-```
-
-The images are returned as a `base64` string
-
-```
-licenseResult?.licenseFrontImage?.let {
-        response.putString(“frontImage”, Base64.encodeToString(it, DEFAULT))
-      }
-      licenseResult?.licenseBackImage?.let {
-        response.putString(“backImage”, Base64.encodeToString(it, DEFAULT))
-      }
-      response.putString(“type”, “normal_license_image”)
-```
-
-### Showing the captured Passport image
-
-Import the Socure package from `rn-socure-sdk`;
-
-Call `Socure.getScannedPassport()`, it returns a “promise” which can then be managed with
-an `async/await` call or with a `.then` call.
-
-```
-Socure.getScannedPassport().then((res) => {
-      setFrontImage(`data:image/png;base64,${res.frontImage}`);
-    })
-```
-
-The image is returned as a `base64` string
-
-```
-licenseResult?.passportImage?.let { image ->
-        response.putString(“frontImage”, Base64.encodeToString(image, Base64.DEFAULT))
-      }
-      response.putString(“type”, “normal_passport_image”)
-```
-
-## Known Issues
-
-- Certain text elements can overlay over other UI elements if the SDK is called modally under a
-  modalPresentationStyle that doesn't cover the full screen. This is most noticeable with small
-  screen devices like the iPhone SE. As a workaround, you can either adjust the text context or use
-  a modalPresentationStyle that covers the full screen.  [iOS]
-
-- Calling the SDK modally in a way that allows for interactive dismissal of the view controller can
-  result in the camera automatically turning off when the user cancels out from dismissing the view
-  controller. At this time, we do not support this action and recommend that interactive dismissals
-  of the SDK be disabled by adding the following code snippet to your code: [iOS]
-
-```
-	if #available(iOS 13.0, *) {
-            viewController.isModalInPresentation = true
-        } else {
-            // Fallback on earlier versions
-        }
-```
-
-- Attempting to capture the back of an ID card that has a magnetic strip and a barcode against a
-  dark background causes issues where the ID cannot be extracted from the environment.
+| Error Code | Error Description (string)                              |
+| ---------- | ------------------------------------------------------- |
+| `7011`       | `Invalid key`                                             |
+| `7021`       | `Failed to initiate the session `                         |
+| `7014`       | `Session expired   `                                      |
+| `7101`       | `Empty key `                                              |
+| `7103`       | `No internet connection  `                                |
+| `7102`       | `Do not have the required permissions to open the camera` |
+| `7022`       | `Failed to upload the documents `                         |
+| `7104`       | `Scan canceled by the user`                               |
+| `7106`       | `Camera error`                                            |
+| `7107`       | `Unknown error`                                           |
+| `7108`       | `Camera resolution doesn't match the minimum requirement` |
+| `7109`       | `Invalid config data`                                     |
+| `7110`       | `Consent declined`                                        |
