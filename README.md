@@ -54,7 +54,7 @@ For the iOS app, you can install the DocV iOS SDK into your project using Cocoap
 In your root project folder, open your Podfile with a text editor and specify the following project dependencies: 
 
 - Replace the deployment target with `platform :ios, '13.0'`.
-- Add the line pod `'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'`
+- Add the line `pod 'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'`
 
 Once completed, your Podfile should look like the following example: 
 
