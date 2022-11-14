@@ -96,7 +96,7 @@ const App = () => {
           onPress={setPublicKey}
           color="#841584"
         />
-        <View>
+        <View style={styles.row3}>
           {isUploading ? <ActivityIndicator /> : null}
           <Button
             disabled={isUploading}
@@ -128,7 +128,11 @@ const styles = StyleSheet.create({
   row2: {
     flexDirection: 'row',
     justifyContent: 'space-around'
-  }
+  },
+  row3: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
 });
 
 export default App;
