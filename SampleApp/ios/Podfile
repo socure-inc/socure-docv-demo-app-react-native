@@ -35,5 +35,5 @@ target 'DocVReactNativeSample' do
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
   end
 
-  pod 'socure-docv-react-native', :path => '../node_modules/@shekhar.gupta/wrapper-rn'
+  pod 'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'
 end
