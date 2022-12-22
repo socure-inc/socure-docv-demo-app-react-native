@@ -49,7 +49,7 @@ const App = () => {
 
   const setPublicKey = () => {
     try {
-      Socure.setSocureSdkKey("958f496c-2aaf-46ee-922f-2bc38bc8422d")
+      Socure.setSocureSdkKey("YOUR_DOCV_SDK_KEY")
       notifyMessage("Public key set")
     } catch (ex) {
       notifyMessage(ex)
