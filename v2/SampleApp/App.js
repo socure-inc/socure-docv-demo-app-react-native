@@ -40,7 +40,7 @@ const App = () => {
   const showConsent = () => {
     Socure.showConsent().then((res) => {
       console.log('RES: ', res);
-      notifyMessage("Consent")
+      notifyMessage("Consent Accepted")
     }, err => {
       console.log("Error: ", err)
       notifyMessage(err.message)
