@@ -40,7 +40,7 @@ const App = () => {
   const showConsent = () => {
     Socure.showConsent().then((res) => {
       console.log('RES: ', res);
-      notifyMessage("Consent Accepted")
+      notifyMessage(res.message)
     }, err => {
       console.log("Error: ", err)
       notifyMessage(err.message)
@@ -49,7 +49,7 @@ const App = () => {
 
   const setPublicKey = () => {
     try {
-      Socure.setSocureSdkKey("YOUR_DOCV_SDK_KEY")
+      Socure.setSocureSdkKey("fffb3d0d-fd6d-4e96-96a5-88ac1ae669cd")
       notifyMessage("Public key set")
     } catch (ex) {
       notifyMessage(ex)
