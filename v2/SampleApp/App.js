@@ -37,9 +37,19 @@ const App = () => {
     });
   };
 
+  const showConsent = () => {
+    Socure.showConsent().then((res) => {
+      console.log('RES: ', res);
+      notifyMessage(res.message)
+    }, err => {
+      console.log("Error: ", err)
+      notifyMessage(err.message)
+    });
+  }
+
   const setPublicKey = () => {
     try {
-      Socure.setSocureSdkKey("YOUR_DOCV_SDK_KEY")
+      Socure.setSocureSdkKey("YOUR_SOCURE_PUBLIC_KEY")
       notifyMessage("Public key set")
     } catch (ex) {
       notifyMessage(ex)
@@ -84,19 +94,26 @@ const App = () => {
           title="Scan ID"
           onPress={startLicense}
         />
+      </View>
+
+      <View style={styles.row1}>
         <Button
           title="Take selfie"
           onPress={startSelfie}
         />
+        <Button
+          title="Get Consent"
+          onPress={showConsent}
+        />
       </View>
 
-      <View style={styles.row2}>
+      <View style={styles.row1}>
         <Button
           title="Set Public Key"
           onPress={setPublicKey}
           color="#841584"
         />
-        <View style={styles.row3}>
+        <View style={styles.row2}>
           {isUploading ? <ActivityIndicator /> : null}
           <Button
             disabled={isUploading}
@@ -128,11 +145,7 @@ const styles = StyleSheet.create({
   row2: {
     flexDirection: 'row',
     justifyContent: 'space-around'
-  },
-  row3: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
+  }
 });
 
 export default App;
