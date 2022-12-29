@@ -10,7 +10,7 @@
   "dependencies": {
     "react": "17.0.2",
     "react-native": "0.68.2",
-    "rn-socure-sdk": "https://github.com/socure-inc/socure-docv-wrapper-react-native.git#ms-2957"
+    "rn-socure-sdk": "https://github.com/socure-inc/socure-docv-wrapper-react-native.git"
   },
   "devDependencies": {
     "@babel/core": "^7.18.10",
