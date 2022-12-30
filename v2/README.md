@@ -6,7 +6,7 @@ The Predictive Document Verification (DocV) SDK v2 for React Native is a React N
 
 >Note: The code in this GitHub repo is for integrating with the DocV SDK v2 React Native bridge. We strongly recommend that you install the latest DocV SDK v3 for React Native via NPM to integrate with the most recent version. See the [React Native Sample App GitHub repo](https://github.com/socure-inc/socure-docv-demo-app-react-native) for more information.
 
->Note: All SDK v2 integrations should be updated to version 2.2.2 or above to meet compliance requirements. Document verification services will be disabled for older SDK versions soon.
+>Note: All SDK v2 integrations must be updated to version 2.2.2 or later to meet compliance requirements. Document verification services will be disabled for older SDK versions soon.
 
 **Android**
 
