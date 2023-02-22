@@ -16,7 +16,7 @@ import {
   Alert,
   Text,
 } from 'react-native';
-import {launchSocureDocV} from '@socure-inc/docv-react-native';
+import {launchSocureDocV} from '@shekhar.gupta/wrapper-rn';
 
 export default function App() {
   const [status, setStatus] = useState<string>('');
