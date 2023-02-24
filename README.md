@@ -2,7 +2,7 @@
 
 The Predictive Document Verification (DocV) SDK v3 for React Native is a React Native wrapper that allows you to use the DocV SDK for Android and iOS in your React Native application. 
 
->Note: All SDK v3 integrations must be updated to version 3.1.0 or later to meet compliance requirements. Document verification services will be disabled for older SDK versions soon.
+> Note: Document verification services will be disabled for older SDK versions soon. All SDK v3 integrations must be updated to version **3.1.0 or later** to meet compliance requirements.
 
 ## Minimum Requirements
 
@@ -217,8 +217,8 @@ The following table lists the available `launchSocureDocV` properties:
 
 | Argument           | Description                                                                                                                                                                                                                                                                                                       |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `socure_sdk_key`   | The unique SDK key obtained from Admin Dashboard. For more information on SDK keys, see the [Getting Started](https://developer.socure.com/docs/) article.                                                                                                                          |
-| `flow`           | An optional JSON string or null value that specifies a custom flow. The `FLOW_NAME` value specifies the name of the flow (created in Admin Dashboard) that the DocV SDK should use.  <br /> <br />`JSON.stringify({flow: {name: “FLOW_NAME”}})` <br /> <br />If the value is `null`, the DocV SDK will fetch the default flow from Admin Dashboard. |  |   |
+| `socure_sdk_key`   | The unique SDK key obtained from Admin Dashboard. For more information on SDK keys, see the [SDK Keys](https://developer.socure.com/docs/admin-dashboard/developers/sdk-keys) article in DevHub.article.                                                                                                                          |
+| `flow`           | An optional JSON string or null value that specifies a custom flow. <br /><br />  `JSON.stringify({flow: {name: “FLOW_NAME”}, document_type: 'license'})` <br /><br />The `flow_name` value specifies the name of the customized Capture App UI flow (created in Admin Dashboard) that the DocV SDK should use for each transaction. If the value is incorrect or `null`, the DocV SDK will use flow set as **Default** in Admin Dashboard. <br /><br />The `document_type` value specifies a single acceptable document type for the transaction and skips the **Selected ID Type Screen** in the Capture App flow. Possible field values are `license` or `passport`. If the value is incorrect or `null`, the DocV SDK will use the document type defined for the flow in Admin Dashboard.  |  |   |
 | `onSuccess`      | A callback function that notifies you when the flow completes successfully.                                                                                                                                                                                                                                                                                               |   |   |
 | `onError`        | A callback function that notifies you when the flow fails.                                                                                                                                                                                                                                                                                                |   |   |
 
