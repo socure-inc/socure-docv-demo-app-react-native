@@ -2,7 +2,7 @@
 
 The Predictive Document Verification (DocV) SDK v3 for React Native is a React Native wrapper that allows you to use the DocV SDK for Android and iOS in your React Native application. 
 
->Note: Document verification services will be disabled for older SDK versions soon. All SDK v3 integrations must be updated to version **3.1.0 or later** to meet compliance requirements.
+> Note: Document verification services will be disabled for older SDK versions soon. All SDK v3 integrations must be updated to version **3.1.0 or later** to meet compliance requirements.
 
 ## Minimum Requirements
 
