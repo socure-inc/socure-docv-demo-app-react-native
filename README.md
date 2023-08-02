@@ -1,6 +1,6 @@
-# Predictive DocV SDK v3 React Native
+# Predictive DocV SDK v4 React Native
 
-The Predictive Document Verification (DocV) SDK v3 for React Native is a React Native wrapper that allows you to use the DocV SDK for Android and iOS in your React Native application. 
+The Predictive Document Verification (DocV) SDK v4 for React Native is a React Native wrapper that allows you to use the DocV SDK for Android and iOS in your React Native application. 
 
 > Note: Document verification services will be disabled for older SDK versions soon. All SDK v3 integrations must be updated to version **3.1.0 or later** to meet compliance requirements.
 
@@ -13,12 +13,12 @@ The Predictive Document Verification (DocV) SDK v3 for React Native is a React N
 **iOS**
 
 - Support for iOS 13 and later
-- Xcode version 13+
+- Xcode version 14+
 
 **Android**
 
 - Android SDK Version 22 (OS Version 5.1) and later
-- Android SDK is compiled with `compileSdkVersion` 32 and Java 11
+- Android SDK is compiled with `compileSdkVersion` 33 and Java 11
 
 ## Getting started
 
@@ -150,7 +150,7 @@ Using the command line, go to your root project folder and enter the following c
   
 ### Configure your Android app
 
-For the Android app, add your project dependencies by going to the module level `build.gradle` file and making sure the `minSdkVersion` is set to at least 22 and the `compileSdkVersion` is set to at least 32. 
+For the Android app, add your project dependencies by going to the module level `build.gradle` file and making sure the `minSdkVersion` is set to at least 22 and the `compileSdkVersion` is set to at least 33. 
 
 ```kotlin {5,6}
 buildscript {
@@ -158,7 +158,7 @@ buildscript {
             ext {
                  ....
                 minSdkVersion = 22 
-                compileSdkVersion = 32
+                compileSdkVersion = 33
                 .....
             }
 }
