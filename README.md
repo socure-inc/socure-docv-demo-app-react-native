@@ -2,9 +2,11 @@
 
 The Predictive Document Verification (DocV) SDK v4 for React Native is a React Native wrapper that allows you to use the DocV SDK for Android and iOS in your React Native application. 
 
-> Note: Document verification services will be disabled for older SDK versions soon. All SDK v3 integrations must be updated to version **3.1.0 or later** to meet compliance requirements.
+>Note: Document verification services will be disabled for older SDK versions soon. All SDK integrations must be updated to version **3.1.0 or later** to meet compliance requirements.
 
 ## Minimum Requirements
+
+Before getting started, check that your development environment meets the following requirements:
 
 **React Native**
 
@@ -12,13 +14,13 @@ The Predictive Document Verification (DocV) SDK v4 for React Native is a React N
 
 **iOS**
 
+- Xcode version 14.1+
 - Support for iOS 13 and later
-- Xcode version 14+
 
 **Android**
 
 - Android SDK Version 22 (OS Version 5.1) and later
-- Android SDK is compiled with `compileSdkVersion` 33 and Java 11
+- Android SDK is compiled with `compileSdkVersion 33` and Java 11
 
 ## Getting started
 
@@ -63,18 +65,13 @@ Once completed, your Podfile should look like the following example:
 ```swift {4,36}
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
-
 platform :ios, '13.0'
 install! 'cocoapods', :deterministic_uuids => false
-
 production = ENV["PRODUCTION"] == "1"
-
 target 'SocureDocVDemo' do
   config = use_native_modules!
-
   # Flags change depending on the env values.
   flags = get_default_flags()
-
   use_react_native!(
     :path => config[:reactNativePath],
     # to enable hermes on iOS, change `false` to `true` and then install pods
@@ -85,19 +82,15 @@ target 'SocureDocVDemo' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
-
   target 'SocureDocVDemoTests' do
     inherit! :complete
     # Pods for testing
   end
-
   post_install do |installer|
     react_native_post_install(installer)
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
   end
-
 pod 'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'
-
 end
 ```
 
@@ -131,7 +124,7 @@ The DocV iOS SDK requires a device's camera permission to capture identity docum
 | Privacy - Camera Usage Description | String | "This application requires use of your camera in order to capture your identity documents." |
 
 
-> **Note:** We recommend you check for camera permission before calling the SocureDocV SDK’s launch API. 
+> **Note:** We recommend you check for camera permission before calling the SocureDocV SDK’s launch API. 
 
 ### Run the app
 
@@ -176,7 +169,6 @@ Ensure that your app manifest has been set up properly to request the following 
 
 ```
 <uses-feature android:name="android.hardware.camera" />
-
 <!-- Declare permissions -->
 <uses-permission android:name="android.permission.CAMERA" />
 <uses-permission android:name="android.permission.INTERNET" />
@@ -217,7 +209,7 @@ The following table lists the available `launchSocureDocV` properties:
 
 | Argument           | Description                                                                                                                                                                                                                                                                                                       |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `socure_sdk_key`   | The unique SDK key obtained from Admin Dashboard. For more information on SDK keys, see the [SDK Keys](https://developer.socure.com/docs/admin-dashboard/developers/sdk-keys) article in DevHub.article.                                                                                                                          |
+| `socure_sdk_key`   | The unique SDK key obtained from Admin Dashboard. For more information, see the [SDK Keys](https://developer.socure.com/docs/admin-dashboard/developers/sdk-keys) article in DevHub.                                                                                                                          |
 | `flow`           | An optional JSON string or null value that specifies a custom flow. <br /><br />  `JSON.stringify({flow: {name: “FLOW_NAME”}, document_type: 'license'})` <br /><br />The `flow_name` value specifies the name of the customized Capture App UI flow (created in Admin Dashboard) that the DocV SDK should use for each transaction. If the value is incorrect or `null`, the DocV SDK will use flow set as **Default** in Admin Dashboard. <br /><br />The `document_type` value specifies a single acceptable document type for the transaction and skips the **Selected ID Type Screen** in the Capture App flow. Possible field values are `license` or `passport`. If the value is incorrect or `null`, the DocV SDK will use the document type defined for the flow in Admin Dashboard.  |  |   |
 | `onSuccess`      | A callback function that notifies you when the flow completes successfully.                                                                                                                                                                                                                                                                                               |   |   |
 | `onError`        | A callback function that notifies you when the flow fails.                                                                                                                                                                                                                                                                                                |   |   |
