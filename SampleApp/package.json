@@ -10,8 +10,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "react": "17.0.2",
-    "react-native": "0.68.2",
+    "react": "18.0.0",
+    "react-native": "0.69.11",
     "@socure-inc/docv-react-native": "4.2.0"
   },
   "devDependencies": {
