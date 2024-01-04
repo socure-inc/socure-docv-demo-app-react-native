@@ -1,4 +1,4 @@
-# Predictive DocV SDK React Native
+# Predictive DocV SDK React Native v4
 
 The Predictive Document Verification (DocV) SDK for React Native is a React Native wrapper that allows you to use the DocV SDK for Android and iOS in your React Native application. 
 
