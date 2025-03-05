@@ -1,4 +1,4 @@
-# Predictive DocV SDK React Native v4
+# Predictive DocV SDK React Native v5
 
 The Predictive Document Verification (DocV) SDK for React Native is a React Native wrapper that allows you to use the DocV SDK for Android and iOS in your React Native application. 
 
@@ -20,7 +20,7 @@ Before getting started, check that your development environment meets the follow
 **Android**
 
 - Android SDK Version 22 (OS Version 5.1) and later
-- Android SDK is compiled with `compileSdkVersion 33` and Java 11
+- Android SDK is compiled with `compileSdkVersion 34` and Java 17
 
 ## Getting started
 
@@ -151,7 +151,7 @@ buildscript {
             ext {
                  ....
                 minSdkVersion = 22 
-                compileSdkVersion = 33
+                compileSdkVersion = 34
                 .....
             }
 }
@@ -187,18 +187,70 @@ react-native run-android
 
 <br />
 
+## Generate a transaction token and configure the Capture App
+
+To initiate the verification process, generate a transaction token (`docvTransactionToken`) by calling the Document Request endpoint v5. We strongly recommend that customers generate this token via a server-to-server API call and then pass it to the DocV SDK to ensure the security of their API key and any data they send to Socure.
+
+### Call the Document Request endpoint
+
+1. From your backend, make a `POST` request to the [`/documents/request`](https://developer.socure.com/reference#tag/Predictive-Document-Verification/operation/DocumentRequestV5) endpoint specifying the following information in the `config` object:
+
+| Parameter   | Required | Description                                                                                                                                                                                                                                                                                                                                                     |
+|------------------|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `language`       | Optional     | Determines the language package for the UI text on the Capture App. Possible values are: <br/><br/> - Arabic: `ar` <br/> - Armenian: `hy` <br/> - Bengali: `bn` <br/> - Brazilian Portuguese: `pt-br` <br/> - Chinese (Simplified): `zh-cn` <br/> - Chinese (Traditional): `zh-tw` <br/> - English: `en` <br/> - French: `fr` <br/> - Haitian Creole: `ht` <br/> - Italian: `it` <br/> - Korean: `ko` <br/> - Polish: `pl-PL` <br/> - Russian: `ru` <br/> - Spanish (EU): `es` <br/> - Tagalog: `tl` <br/> - Urdu: `ur` <br/> - Vietnamese: `vi` <br/><br/> **Note**: Socure can quickly add support for new language requirements. For more information, contact [support@socure.com](mailto:support@socure.com). |
+| `useCaseKey`     | Optional     | Deploys a customized Capture App flow on a per-transaction basis. Replace the `customer_use_case_key` value with the name of the flow you created in [Admin Dashboard](https://developer.socure.com/docs/sdks/docv/capture-app/customize-capture-app). <br/><br/> - If this field is empty, the Capture App will use the flow marked as **Default** in Admin Dashboard. <br/> - If the value provided is incorrect, the SDK will return an `Invalid Request` error. |
+
+>Note: We recommend including as much consumer PII in the body of the request as possible to return the most accurate results.
+
+```bash
+curl --location 'https://service.socure.com/api/5.0/documents/request' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: SocureApiKey a182150a-363a-4f4a-xxxx-xxxxxxxxxxxx' \
+--data '{
+  "config": {
+    "useCaseKey": "customer_use_case_key", 
+    ...
+  }
+  "firstName": "Dwayne",
+  "surName": "Denver",
+  "dob": "1975-04-02",
+  "mobileNumber": "+13475550100",
+  "physicalAddress": "200 Key Square St",
+  "physicalAddress2": null,
+  "city": "Brownsville",
+  "state": "TN",
+  "zip": "38012",
+  "country": "US"
+}'
+```
+
+2. When you receive the API response, collect the `docvTransactionToken`. This value is required to initialize the DocV Android SDK and fetch the DocV results.
+
+```json
+{
+  "referenceId": "123ab45d-2e34-46f3-8d17-6f540ae90303",
+    "data": {
+      "eventId": "acdf5b1a-c96b-4ed8-92b9-59471397d04a",
+      "customerUserId": "121212",
+      "docvTransactionToken" : "acdf5b1a-c96b-4ed8-92b9-59471397d04a", 
+      "qrCode": "data:image/png;base64,iVBO......K5CYII=",
+      "url": "https://verify.socure.com/#/dv/acdf5b1a-c96b-4ed8-92b9-59471397d04a"
+    }
+}
+```
+
 ## Import and launch the SDK
 
-After you have installed the DocV SDK React Native wrapper using NPM and configured your iOS or Android app, add the following code to your `App.js` file to import `launchSocureDocV`:
+Add the following code to your  `App.js` file to import `launchSocureDocV`:
 
 ```jsx
 import { launchSocureDocV } from "@socure-inc/docv-react-native"
 ```
 
-To launch the Socure DocV SDK, specify your SDK key and call the `launchSocureDocV` launch function: 
+Call `launchSocureDocV` to initiate the Socure DocV SDK: 
 
 ```jsx
-launchSocureDocV("SOCURE_SDK_KEY", flow, onSuccess, onError);
+launchSocureDocV("docVTransactionToken", "SOCURE_SDK_KEY", userSocureGov, onSuccess, onError);
 ```
 
 ## How it works
@@ -207,105 +259,54 @@ Your React Native application initializes and communicates with the DocV SDK thr
 
 The following table lists the available `launchSocureDocV` properties:
 
-| Argument           | Description                                                                                                                                                                                                                                                                                                       |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `socure_sdk_key`   | The unique SDK key obtained from Admin Dashboard. For more information, see the [SDK Keys](https://developer.socure.com/docs/admin-dashboard/developers/sdk-keys) article in DevHub.                                                                                                                          |
-| `flow`           | An optional JSON string or null value that specifies a custom flow. <br /><br />  `JSON.stringify({flow: {name: “FLOW_NAME”}, document_type: 'license'})` <br /><br />The `flow_name` value specifies the name of the customized Capture App UI flow (created in Admin Dashboard) that the DocV SDK should use for each transaction. If the value is incorrect or `null`, the DocV SDK will use flow set as **Default** in Admin Dashboard. <br /><br />The `document_type` value specifies a single acceptable document type for the transaction and skips the **Selected ID Type Screen** in the Capture App flow. Possible field values are `license` or `passport`. If the value is incorrect or `null`, the DocV SDK will use the document type defined for the flow in Admin Dashboard.  |  |   |
-| `onSuccess`      | A callback function that notifies you when the flow completes successfully.                                                                                                                                                                                                                                                                                               |   |   |
-| `onError`        | A callback function that notifies you when the flow fails.                                                                                                                                                                                                                                                                                                |   |   |
+| Argument           | Description                                                                                                                                                                                                                          |
+| ------------------ |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `socure_sdk_key`   | The unique SDK key obtained from [Admin Dashboard] (https://dashboard.socure.com/) used to authenticate the SDK. For more information, see the [SDK Keys](https://developer.socure.com/docs/admin-dashboard/developers/sdk-keys) article in DevHub. |
+| `DocV_Transaction_Token	`   | The transaction token retrieved from the API response of the [/documents/request] (https://developer.socure.com/reference/#tag/Predictive-Document-Verification) endpoint. Required to initiate the document verification session.   |  |   |
+| `useSocureGov	`   | A Boolean flag indicating whether to use the GovCloud environment. It defaults to `false`. This is only applicable for customers provisioned in the SocureGov environment.    |  |   |
+| `onSuccess`      | A callback function invoked when the flow completes successfully.                                                                                                                                                           |   |   |
+| `onError`        | A callback function invoked when the flow fails.                                                                                                                                                                           |   |   |
 
                                                                                 
-## Response callbacks
+## Handle response callbacks
 
-Your app can receive a response callback from the Socure DocV SDK when the flow completes successfully or returns with an error using the `onSuccess` and `onError` callback functions.
+Your app can receive response callbacks from the launchSocureDocV function when the flow either completes successfully or returns with an error. The SDK represents these outcomes using the `onSuccess` and `onError` callback functions.
 
 ### `onSuccess` response
-When the consumer successfully completes the flow and the captured images are uploaded, the `onSuccess` callback receives the ScannedData object which contains session information and the extracted data. The table below lists the available `ScannedData` properties.
 
-| Result Field   | Type        | Description                                                                                                                                                                                          |
-|----------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `docUUID`        | string      | The UUID for the uploaded scanned images.                                                                                                                                                             |
-| `sessionId`      | string      | The session ID for the scan session.                                                                                                                                                                 |
-| `extractedData`  | JSON object | Contains extractedInfo from the barcode or MRZ.                                                                                                                                                      |
-| `captureData`    | JSON object | The mapped capture type for every scan. <br /> Possible keys are: `lic_front`, `lic_back`, `passport`, `selfie` <br /> Possible values can be `manual` or `auto`                                                              |
-| `capturedImages` | JSON object | The mapped image data of captured images. <br /> Possible keys are: `lic_front`, `lic_back`, `passport`, `selfie` <br />  Value will be a base64 image string <br />**Note**: Prefix `data:image/png;base64,` while using base64 string. |
+The `onSuccess` callback is triggered when the consumer successfully completes the verification flow and the captured images are uploaded to Socure's servers. It returns an object containing a device session token, which can be used for accessing device details about the specific session.
 
-#### Sample `onSuccess` response
-```json
-{
-  "docUUID": "UUID for the uploaded scanned images",
-  "sessionId": "Session ID for the particular scan session",
-  "extractedData": {
-    "address": "123 TAYLOR AVE",
-    "issueDate": "09282007",
-    "parsedAddress": {
-      "city": "SAN BRUNO",
-      "country": "USA",
-      "physicalAddress": "123 TAYLOR AVE",
-      "physicalAddress2": "SAN BRUNO",
-      "postalCode": "940660000",
-      "state": "CA"
-    },
-    "dob": "07221977",
-    "documentNumber": "D12345",
-    "expirationDate": "07222022",
-    "firstName": "SAM",
-    "fullName": "SAM SOTO",
-    "type": "barcode"
-  },
-  "captureData": {
-    "lic_front": "auto",
-    "lic_back": "auto",
-    "passport": "auto",
-    "selfie": "manual"
-  },
-  "capturedImages": {
-    "lic_front": "base64 Image as String",
-    "lic_back": "base64 Image as String",
-    "selfie": "base64 Image as String"
-  }
+```javascript 
+{ 
+  deviceSessionToken: 'eyJraWQiOiJmMzRiN2YiLCJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzd3QiOiJmZWJlMDYxNS0wYjgxLTRkNTMtYjgyMS03YTAxNjUwZTFiMjEifQ.kz3W8oQxmlqWk1x3W4mf7BSgGmr-qAyvN6fxR_yusbfWdznYVAzdeabHdyW0vAFGgGYvEmyX-5YUtHDMQB0ptA' 
 }
 ```
 
 ### `onError` response
 
-If the consumer exits the flow without completing it or the SDK encounters an error, the `onError` callback receives the `ScanError` object which contains session information and the error. The table below lists the available `ScanError` properties.
+The `onError` callback is triggered when the DocV SDK encounters an error or when the consumer exits the flow without completing it. It returns a message printed with the `deviceSessionToken` and specific error details.
 
-| Error Field    | Type        | Description                                                                                                                                                                                                          |
-|----------------|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `capturedImages` | JSON object | The mapped image data of captured images (if available). <br /> Possible keys are: `lic_front`, `lic_back`, `passport`, `selfie` <br /> Value will be a base64 image string <br /> **Note**: Prefix `data:image/png;base64,` while using base64 string. |
-| `errorMessage`   | string      | The error code description.                                                                                                                                                                                          |
-| `sessionId`      | string      | The session ID for the particular scan session.                                                                                                                                                                      |
-| `statusCode`     | string      | The error code returned by Socure DocV SDK.                                                                                                                                                                          |
-
-#### Sample `onError` response
-```json
-{
-  "capturedImages": {
-    "passport": "base64 Image as String"
-  },
-  "errorMessage": "Scan canceled by the user",
-  "sessionId": "2a55f9-42bgfa-4fb3-9gf32e-6a6fec5",
-  "statusCode": "7104"
+```javascript title="Error object example"
+{ 
+  deviceSessionToken: 'eyJraWQiOiJmMzRiN2YiLCJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzd3QiOiJmZWJlMDYxNS0wYjgxLTRkNTMtYjgyMS03YTAxNjUwZTFiMjEifQ.kz3W8oQxmlqWk1x3W4mf7BSgGmr-qAyvN6fxR_yusbfWdznYVAzdeabHdyW0vAFGgGYvEmyX-5YUtHDMQB0ptA',
+  error: 'Scan canceled by the user' 
 }
 ```
 
-### Error codes
+#### Possible `onError` messages
 
-The following table lists the errors that can be returned by Socure DocV SDK:
+The following error messages may be returned by the Socure DocV SDK:
 
-| Error Code | Error Description (string)                              |
-| ---------- | ------------------------------------------------------- |
-| `7011`       | `Invalid key`                                             |
-| `7021`       | `Failed to initiate the session `                         |
-| `7014`       | `Session expired   `                                      |
-| `7101`       | `Empty key `                                              |
-| `7103`       | `No internet connection  `                                |
-| `7102`       | `Do not have the required permissions to open the camera` |
-| `7022`       | `Failed to upload the documents `                         |
-| `7104`       | `Scan canceled by the user`                               |
-| `7106`       | `Camera error`                                            |
-| `7107`       | `Unknown error`                                           |
-| `7108`       | `Camera resolution doesn't match the minimum requirement` |
-| `7109`       | `Invalid config data`                                     |
-| `7110`       | `Consent declined`                                        |
+| Error Message                                         | Error Description                                                 |
+|-------------------------------------------------------|-------------------------------------------------------------------|
+| `"No internet connection"`                              | No internet connection                     |
+| `"Failed to initiate the session"`                      | Failed to initiate the session             |
+| `"Permissions to open the camera declined by the user"` | Permissions to open the camera declined by the user                                    |
+| `"Consent declined by the user"`                        | Consent declined by the user                              |
+| `"Failed to upload the documents"`                      | Failed to upload the documents |
+| `"Invalid transaction token"`                          | Invalid transaction token           |
+| `"Invalid or missing SDK key"`                          | Invalid or missing SDK key                       |
+| `"Session expired"`                                    | Session expired                         |
+| `"Scan canceled by the user"`                           | Scan canceled by the user                   |
+| `"Unknown error"`                                       | Unknown error                                     |
+
