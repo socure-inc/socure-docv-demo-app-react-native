@@ -1,12 +1,8 @@
 /**
  * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
  */
 
-import React, {useState} from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -16,54 +12,54 @@ import {
   Alert,
   Text,
 } from 'react-native';
-import {launchSocureDocV} from '@socure-inc/docv-react-native';
+import { launchSocureDocV } from '@socure-inc/docv-react-native';
 
 export default function App() {
-  const [status, setStatus] = useState<string>('');
+  const [status, setStatus] = useState('');
+  const useSocureGov = false;
 
-  const notifyMessage = msg => {
+  const notifyMessage = useCallback((msg) => {
     setStatus(msg);
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(msg, ToastAndroid.SHORT);
-    } else {
-      Alert.alert(msg);
-    }
-  };
+    Platform.OS === 'android' ? ToastAndroid.show(msg, ToastAndroid.SHORT) : Alert.alert(msg);
+  }, []);
 
-  const successCallback = result => {
-    notifyMessage(`Success: {docUUID = ${result.docUUID}}`);
+  const successCallback = useCallback((result) => {
+    const message = `Success: {deviceSessionToken = ${result.deviceSessionToken}}`;
+    notifyMessage(message);
     console.log(result);
-  };
+  }, [notifyMessage]);
 
-  const errorCallback = error => {
-    notifyMessage(
-      `Failure: {code: ${error.statusCode}, message: ${error.errorMessage}}`,
-    );
+  const errorCallback = useCallback((error) => {
+    const message = `Failure: {Error Message: ${error.error}, deviceSessionToken: ${error.deviceSessionToken}}`;
+    notifyMessage(message);
     console.log(error);
+  }, [notifyMessage]);
+
+  const handleLaunch = () => {
+    launchSocureDocV(
+      'docvTransactionToken',
+      'YOUR_SOCURE_SDK_KEY',
+      useSocureGov,
+      successCallback,
+      errorCallback
+    );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.textStyle}>{status}</Text>
-
-      <Button
-        title="Launch Socure DocV"
-        onPress={() => {
-          launchSocureDocV(
-            'YOUR_SOCURE_SDK_KEY',
-            undefined,
-            successCallback,
-            errorCallback,
-          );
-        }}
-      />
+      <Text style={styles.text}>{status}</Text>
+      <Button title="Launch Socure DocV" onPress={handleLaunch} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-  textStyle: {
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
     color: 'black',
     fontSize: 20,
     fontWeight: 'bold',
