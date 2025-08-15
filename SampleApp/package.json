@@ -10,9 +10,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@socure-inc/docv-react-native": "5.0.2",
-    "react": "18.0.0",
-    "react-native": "^0.69.11"
+    "@socure-inc/docv-react-native": "5.0.5",
+    "react": "18.2.0",
+    "react-native": "^0.71.0"
   },
   "devDependencies": {
     "@babel/core": "^7.18.10",

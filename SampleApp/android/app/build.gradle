@@ -78,11 +78,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
  * ]
  */
 
-project.ext.react = [
-    enableHermes: false,  // clean and rebuild if changing
-]
-
-apply from: "../../node_modules/react-native/react.gradle"
+apply plugin: "com.facebook.react"
 
 /**
  * Set this to true to create two separate APKs instead of one:
@@ -119,7 +115,8 @@ def jscFlavor = 'org.webkit:android-jsc:+'
  * on project.ext.react, JavaScript will not be compiled to Hermes Bytecode
  * and the benefits of using Hermes will therefore be sharply reduced.
  */
-def enableHermes = project.ext.react.get("enableHermes", false);
+// Toggle Hermes JS engine. When true, Hermes native libs are packaged.
+def enableHermes = true;
 
 /**
  * Architectures to build native code for.
@@ -133,6 +130,8 @@ android {
     ndkVersion rootProject.ext.ndkVersion
 
     compileSdkVersion rootProject.ext.compileSdkVersion
+
+    namespace "com.docvreactnativesample"
 
     defaultConfig {
         applicationId "com.docvreactnativesample"
@@ -170,6 +169,11 @@ android {
                 }
             }
         }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     if (isNewArchitectureEnabled()) {
@@ -265,6 +269,8 @@ dependencies {
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules
 
+    implementation "androidx.appcompat:appcompat:${rootProject.ext.androidXFragmentVersion}"
+
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}") {
@@ -281,9 +287,7 @@ dependencies {
     }
 
     if (enableHermes) {
-        def hermesPath = "../../node_modules/hermes-engine/android/";
-        debugImplementation files(hermesPath + "hermes-debug.aar")
-        releaseImplementation files(hermesPath + "hermes-release.aar")
+        implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
     }
