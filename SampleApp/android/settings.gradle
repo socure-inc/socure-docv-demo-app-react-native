@@ -1,6 +1,22 @@
-rootProject.name = 'DocVReactNativeSample'
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
-include ':app'
-includeBuild('../node_modules/react-native-gradle-plugin')
 
-// RN 0.71 uses the Gradle plugin included via includeBuild above
+
+pluginManagement {
+    includeBuild("../node_modules/@react-native/gradle-plugin")
+}
+
+plugins {
+    id("com.facebook.react.settings")
+}
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    // This helper automatically discovers and includes your native modules
+    ex.autolinkLibrariesFromCommand()
+}
+
+rootProject.name = 'DocVReactNativeSample'
+
+include ':app'
+includeBuild('../node_modules/@react-native/gradle-plugin')
+
+//include ':SocureDocVReactNative'
+//project(':SocureDocVReactNative').projectDir = file('../node_modules/@socure/docv-react-native/android')

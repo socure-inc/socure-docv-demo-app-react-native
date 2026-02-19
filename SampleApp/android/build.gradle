@@ -4,38 +4,44 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 buildscript {
     ext {
-        buildToolsVersion = "34.0.0"
-        minSdkVersion = 22
-        compileSdkVersion = 34
-        targetSdkVersion = 34
-
+        buildToolsVersion = "36.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 36
+        targetSdkVersion = 36
+        kotlinVersion = "2.1.0"
         androidXFragmentVersion = "1.5.7"
-
-        if (System.properties['os.arch'] == "aarch64") {
-            // For M1 Users we need to use the NDK 24 which added support for aarch64
-            ndkVersion = "24.0.8215888"
-        } else {
-            // Otherwise we default to the side-by-side NDK version from AGP.
-            ndkVersion = "21.4.7075529"
-        }
+        ndkVersion = "27.1.12297006"
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.4.2")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        classpath("com.android.tools.build:gradle:8.9.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
         // Use a newer R8/D8 to avoid Kotlin metadata dexing issues
-        classpath("com.android.tools:r8:8.3.36")
+        classpath("com.android.tools:r8:8.12.22")
         classpath("de.undercouch:gradle-download-task:4.1.2")
+
+
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
+    configurations.all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'org.jetbrains.kotlin') {
+                details.useVersion kotlinVersion
+            }
+        }
+    }
+
 }
 
 allprojects {
     repositories {
+        google()
+        maven {url "https://sdk.socure.com/"}
         maven {
             // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
             url("$rootDir/../node_modules/react-native/android")
@@ -51,7 +57,15 @@ allprojects {
                 excludeGroup "com.facebook.react"
             }
         }
-        google()
-        maven {url "https://sdk.socure.com/"}
+
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0"
+            force "org.jetbrains.kotlin:kotlin-reflect:2.1.0"
+        }
     }
 }
+apply plugin: "com.facebook.react.rootproject"
