@@ -10,7 +10,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@socure-inc/docv-react-native": "file:../../socure-docv-npm-react-native",
+    "@socure-inc/docv-react-native": "5.1.6",
     "react": "19.0.0",
     "react-native": "0.79.7",
     "@react-native-community/cli": "latest"

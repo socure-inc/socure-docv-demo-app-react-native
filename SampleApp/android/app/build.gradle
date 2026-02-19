@@ -129,14 +129,6 @@ android {
 
 
 
-//    splits {
-//        abi {
-//            reset()
-//            enable enableSeparateBuildPerCPUArchitecture
-//            universalApk false  // If true, also generate a universal APK
-//            include (*reactNativeArchitectures())
-//        }
-//    }
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -158,23 +150,6 @@ android {
         }
     }
 
-//    // applicationVariants are e.g. debug, release
-//    applicationVariants.all { variant ->
-//        variant.outputs.each { output ->
-//            // For each separate APK per architecture, set a unique version code as described here:
-//            // https://developer.android.com/studio/build/configure-apk-splits.html
-//            // Example: versionCode 1 will generate 1001 for armeabi-v7a, 1002 for x86, etc.
-//            def versionCodes = ["armeabi-v7a": 1, "x86": 2, "arm64-v8a": 3, "x86_64": 4]
-//            def abi = output.getFilter(OutputFile.ABI)
-//            if (abi != null) {  // null for the universal-debug, universal-release variants
-//                output.versionCodeOverride =
-//                        defaultConfig.versionCode * 1000 + versionCodes.get(abi)
-//            }
-//
-//        }
-//    }
-
-
 
     packagingOptions {
         jniLibs {
@@ -184,9 +159,7 @@ android {
 }
 
 dependencies {
-   implementation project(':socure-inc_docv-react-native')
     implementation fileTree(dir: "libs", include: ["*.jar"])
-    //implementation project(':socure-inc_docv-react-native')
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native"  // From node_modules
 
@@ -223,8 +196,6 @@ task copyDownloadableDepsToLibs(type: Copy) {
     into 'libs'
 }
 
-//apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle");
-//applyNativeModulesAppBuildGradle(project)
 
 def isNewArchitectureEnabled() {
     // To opt-in for the New Architecture, you can either:
@@ -232,17 +203,4 @@ def isNewArchitectureEnabled() {
     // - Invoke gradle with `-newArchEnabled=true`
     // - Set an environment variable `ORG_GRADLE_PROJECT_newArchEnabled=true`
     return project.hasProperty("newArchEnabled") && project.newArchEnabled == "true"
-}
-
-// android/app/build.gradle
-
-subprojects {
-    afterEvaluate { project ->
-        // This forces the library to register its code under the correct namespace
-        if (project.name.contains('socure-docv-react-native')) {
-            android {
-                namespace = "com.socure.docv.reactnative"
-            }
-        }
-    }
 }

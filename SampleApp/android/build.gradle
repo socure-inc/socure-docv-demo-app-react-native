@@ -23,10 +23,6 @@ buildscript {
         // Use a newer R8/D8 to avoid Kotlin metadata dexing issues
         classpath("com.android.tools:r8:8.12.22")
         classpath("de.undercouch:gradle-download-task:4.1.2")
-
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
     }
     configurations.all {
         resolutionStrategy.eachDependency { DependencyResolveDetails details ->
@@ -60,12 +56,5 @@ allprojects {
 
     }
 
-    configurations.all {
-        resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0"
-            force "org.jetbrains.kotlin:kotlin-reflect:2.1.0"
-        }
-    }
 }
 apply plugin: "com.facebook.react.rootproject"
