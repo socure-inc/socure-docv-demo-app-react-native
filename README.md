@@ -19,8 +19,8 @@ Before getting started, check that your development environment meets the follow
 
 **Android**
 
-- Android SDK Version 22 (OS Version 5.1) and later
-- Android SDK is compiled with `compileSdkVersion 34` and Java 17
+- Android SDK Version 23 (OS Version 6) and later
+- Android SDK is compiled with `compileSdkVersion 36` and Java 17
 
 ## Getting started
 
