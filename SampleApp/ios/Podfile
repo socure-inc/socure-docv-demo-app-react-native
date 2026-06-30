@@ -31,6 +31,58 @@ target 'DocVReactNativeSample' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # --- socure-docv-react-native build fixes (Xcode 26 / RN new arch) ---
+    # The pod mixes Swift + Obj-C++ in a CocoaPods *static* module. Three issues
+    # cascade on a clean build; we patch the copied pod sources and the generated
+    # Pods project here so the demo app builds without modifying the library repo.
+    # This hook is idempotent and re-runs on every `pod install`.
+    socure_ios = File.expand_path('../node_modules/@socure-inc/docv-react-native/ios', __dir__)
+
+    # Fix 1: the Swift bridging header is swept into the pod's Clang module umbrella.
+    # Its `#import <ReactCommon/RCTTurboModule.h>` is a non-modular C++ header, which
+    # makes Clang module dependency scanning fail ("Unable to resolve module
+    # dependency: 'socure_docv_react_native'"). The Swift side never uses TurboModule
+    # C++ types (those live in the .mm under RCT_NEW_ARCH_ENABLED), so drop the import.
+    bridging = File.join(socure_ios, 'SocureDocVReactNative-Bridging-Header.h')
+    if File.exist?(bridging)
+      original = File.read(bridging)
+      patched = original.gsub(/^#import <ReactCommon\/RCTTurboModule\.h>\r?\n/, '')
+      if patched != original
+        File.write(bridging, patched)
+        Pod::UI.puts "[socure-docv] Removed non-modular C++ import from bridging header".green
+      end
+    end
+
+    # Fix 2: the generated `<module>-Swift.h` compatibility header consumed by the
+    # .mm only carries `public`/`open` declarations. `SocureDocVHelper` is `internal`,
+    # so the .mm sees "use of undeclared identifier 'SocureDocVHelper'". Promote the
+    # class and its @objc factory methods to `public`.
+    swift = File.join(socure_ios, 'SocureDocVReactNative.swift')
+    if File.exist?(swift)
+      original = File.read(swift)
+      patched = original
+        .gsub(/^class SocureDocVHelper\b/, 'public class SocureDocVHelper')
+        .gsub(/^(\s*)@objc static func launch\b/, '\1@objc public static func launch')
+      if patched != original
+        File.write(swift, patched)
+        Pod::UI.puts "[socure-docv] Promoted SocureDocVHelper to public for Obj-C interop".green
+      end
+    end
+
+    # Fix 3: once the @objc methods are public, swiftc emits a self-import of
+    # `<socure_docv_react_native/socure_docv_react_native.h>` into the generated
+    # header, but CocoaPods only created the dashed `...-umbrella.h`. Provide the
+    # module-named header (pointing at the umbrella) so the import resolves.
+    public_headers = File.join(installer.sandbox.root, 'Headers', 'Public', 'socure_docv_react_native')
+    if Dir.exist?(public_headers)
+      shim = File.join(public_headers, 'socure_docv_react_native.h')
+      shim_body = "#import \"socure-docv-react-native-umbrella.h\"\n"
+      if !File.exist?(shim) || File.read(shim) != shim_body
+        File.write(shim, shim_body)
+        Pod::UI.puts "[socure-docv] Added module-named umbrella shim header".green
+      end
+    end
   end
 
   pod 'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'

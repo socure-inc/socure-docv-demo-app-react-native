@@ -1,6 +1,6 @@
 {
   "name": "DocVReactNativeSample",
-  "version": "5.2.7",
+  "version": "5.2.8",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -10,10 +10,10 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@socure-inc/docv-react-native": "5.2.7",
+    "@react-native-community/cli": "latest",
+    "@socure-inc/docv-react-native": "5.2.8",
     "react": "19.0.0",
-    "react-native": "0.79.7",
-    "@react-native-community/cli": "latest"
+    "react-native": "0.79.7"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
