@@ -151,7 +151,7 @@ buildscript {
             ext {
                  ....
                 minSdkVersion = 22 
-                compileSdkVersion = 34
+                compileSdkVersion = 36
                 .....
             }
 }
@@ -241,72 +241,150 @@ curl --location 'https://service.socure.com/api/5.0/documents/request' \
 
 ## Import and launch the SDK
 
-Add the following code to your  `App.js` file to import `launchSocureDocV`:
+The wrapper exposes two APIs. Use **`launchSocureDocVWithPromise`** for new integrations and any app running React Native 0.79+. Use **`launchSocureDocV`** if your codebase already uses callbacks or you need to support older React Native versions.
+
+### Option A: Promise-based API (recommended)
+
+The Promise-based API is the recommended approach for New Architecture apps. It uses `async/await` and standard JavaScript error handling.
+
+1. Import `launchSocureDocVWithPromise`:
 
 ```jsx
-import { launchSocureDocV } from "@socure-inc/docv-react-native"
+import { launchSocureDocVWithPromise } from "@socure-inc/docv-react-native";
 ```
 
-Call `launchSocureDocV` to initiate the Socure DocV SDK: 
+2. Call `launchSocureDocVWithPromise` inside an `async` function:
 
 ```jsx
-launchSocureDocV("docVTransactionToken", "SOCURE_SDK_KEY", userSocureGov, onSuccess, onError);
-```
-
-## How it works
-
-Your React Native application initializes and communicates with the DocV SDK through the React Native wrapper using the `launchSocureDocV` instance. The `launchSocureDocV` function also includes two callback functions, one for `onSuccess` and one for `onError`. See [Response callbacks](#response-callbacks) below for more information.  
-
-The following table lists the available `launchSocureDocV` properties:
-
-| Argument           | Description                                                                                                                                                                                                                          |
-| ------------------ |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `socure_sdk_key`   | The unique SDK key obtained from [Admin Dashboard] (https://dashboard.socure.com/) used to authenticate the SDK. For more information, see the [SDK Keys](https://developer.socure.com/docs/admin-dashboard/developers/sdk-keys) article in DevHub. |
-| `DocV_Transaction_Token	`   | The transaction token retrieved from the API response of the [/documents/request] (https://developer.socure.com/reference/#tag/Predictive-Document-Verification) endpoint. Required to initiate the document verification session.   |  |   |
-| `useSocureGov	`   | A Boolean flag indicating whether to use the GovCloud environment. It defaults to `false`. This is only applicable for customers provisioned in the SocureGov environment.    |  |   |
-| `onSuccess`      | A callback function invoked when the flow completes successfully.                                                                                                                                                           |   |   |
-| `onError`        | A callback function invoked when the flow fails.                                                                                                                                                                           |   |   |
-
-                                                                                
-## Handle response callbacks
-
-Your app can receive response callbacks from the launchSocureDocV function when the flow either completes successfully or returns with an error. The SDK represents these outcomes using the `onSuccess` and `onError` callback functions.
-
-### `onSuccess` response
-
-The `onSuccess` callback is triggered when the consumer successfully completes the verification flow and the captured images are uploaded to Socure's servers. It returns an object containing a device session token, which can be used for accessing device details about the specific session.
-
-```javascript 
-{ 
-  deviceSessionToken: 'eyJraWQiOiJmMzRiN2YiLCJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzd3QiOiJmZWJlMDYxNS0wYjgxLTRkNTMtYjgyMS03YTAxNjUwZTFiMjEifQ.kz3W8oQxmlqWk1x3W4mf7BSgGmr-qAyvN6fxR_yusbfWdznYVAzdeabHdyW0vAFGgGYvEmyX-5YUtHDMQB0ptA' 
+try {
+  const result = await launchSocureDocVWithPromise(
+    "docVTransactionToken",
+    "SOCURE_SDK_KEY",
+    false // useSocureGov
+  );
+  console.log("Success:", result.deviceSessionToken);
+} catch (error) {
+  console.log("Error code:", error.code);
+  console.log("Error message:", error.message);
 }
 ```
+
+#### `launchSocureDocVWithPromise` Parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `docVTransactionToken` | String | The transaction token from the [`/documents/request`](https://developer.socure.com/reference#tag/Predictive-Document-Verification) API response. Required to initiate the document verification session. |
+| `publicKey` | String | The unique SDK key from [Admin Dashboard](https://developer.socure.com/docs/admin-dashboard/developers/sdk-keys) used to authenticate the SDK. |
+| `useSocureGov` | Boolean | Set to `true` to use the GovCloud environment. Defaults to `false`. Applicable only to customers provisioned in the SocureGov environment. |
+
+**Returns:** `Promise<DocVResult>` — resolves with `{ deviceSessionToken: string }` on success, or rejects with an error object containing `code` and `message` on failure.
+
+---
+
+### Option B: Callback-based API (legacy)
+
+The callback-based API is preserved for backward compatibility. Existing integrations do not require any code changes.
+
+1. Import `launchSocureDocV`:
+
+```jsx
+import { launchSocureDocV } from "@socure-inc/docv-react-native";
+```
+
+2. Call `launchSocureDocV` to initiate the Socure DocV SDK:
+
+```jsx
+launchSocureDocV(
+  "docVTransactionToken",
+  "SOCURE_SDK_KEY",
+  false, // useSocureGov
+  onSuccess,
+  onError
+);
+```
+
+#### `launchSocureDocV` Parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `docVTransactionToken` | String | The transaction token from the [`/documents/request`](https://developer.socure.com/reference#tag/Predictive-Document-Verification) API response. Required to initiate the document verification session. |
+| `publicKey` | String | The unique SDK key from [Admin Dashboard](https://developer.socure.com/docs/admin-dashboard/developers/sdk-keys) used to authenticate the SDK. |
+| `useSocureGov` | Boolean | Set to `true` to use the GovCloud environment. Defaults to `false`. Applicable only to customers provisioned in the SocureGov environment. |
+| `onSuccess` | Function | A callback function invoked when the flow completes successfully. |
+| `onError` | Function | A callback function invoked when the flow fails. |
+
+> **New Architecture note:** Under React Native New Architecture, `launchSocureDocV` automatically routes through the TurboModule promise API and bridges the result back to your `onSuccess` / `onError` callbacks. No code changes are required.
+
+## Handle response callbacks
+
+### Success response
+
+When the consumer successfully completes the verification flow and the captured images are uploaded to Socure's servers, the SDK returns a `DocVResult` object containing a device session token.
+
+**Promise API** — the `Promise` resolves with:
+
+```javascript
+{
+  deviceSessionToken: 'eyJraWQiOiJmMzRiN2YiLCJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9...'
+}
+```
+
+**Callback API** — the `onSuccess` callback receives the same object:
+
+```javascript
+{
+  deviceSessionToken: 'eyJraWQiOiJmMzRiN2YiLCJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9...'
+}
+```
+
+The `deviceSessionToken` can be used to access device risk details for the specific session.
 
 ### `onError` response
 
-The `onError` callback is triggered when the DocV SDK encounters an error or when the consumer exits the flow without completing it. It returns a message printed with the `deviceSessionToken` and specific error details.
+The `onError` callback (and Promise rejection) is triggered when the DocV SDK encounters an error or when the consumer exits the flow without completing it.
 
-```javascript title="Error object example"
-{ 
-  deviceSessionToken: 'eyJraWQiOiJmMzRiN2YiLCJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzd3QiOiJmZWJlMDYxNS0wYjgxLTRkNTMtYjgyMS03YTAxNjUwZTFiMjEifQ.kz3W8oQxmlqWk1x3W4mf7BSgGmr-qAyvN6fxR_yusbfWdznYVAzdeabHdyW0vAFGgGYvEmyX-5YUtHDMQB0ptA',
-  error: 'Scan canceled by the user' 
+**Promise API** — the `Promise` rejects with a JavaScript `Error`-like object. Access `error.code` and `error.message`:
+
+```javascript
+try {
+  const result = await launchSocureDocVWithPromise(token, key, false);
+} catch (error) {
+  console.log(error.code);    // e.g. "ERR_USER_CANCELED"
+  console.log(error.message); // e.g. "Scan canceled by the user"
 }
 ```
 
-#### Possible `onError` messages
+**Callback API** — the `onError` callback receives an object with the following shape:
 
-The following error messages may be returned by the Socure DocV SDK:
+```javascript
+{
+  code: 'ERR_USER_CANCELED',
+  error: 'Scan canceled by the user',
+  deviceSessionToken: 'eyJraWQiOiJmMzRiN2YiLCJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9...'
+}
+```
 
-| Error Message                                         | Error Description                                                 |
-|-------------------------------------------------------|-------------------------------------------------------------------|
-| `"No internet connection"`                              | No internet connection                     |
-| `"Failed to initiate the session"`                      | Failed to initiate the session             |
-| `"Permissions to open the camera declined by the user"` | Permissions to open the camera declined by the user                                    |
-| `"Consent declined by the user"`                        | Consent declined by the user                              |
-| `"Failed to upload the documents"`                      | Failed to upload the documents |
-| `"Invalid transaction token"`                          | Invalid transaction token           |
-| `"Invalid or missing SDK key"`                          | Invalid or missing SDK key                       |
-| `"Session expired"`                                    | Session expired                         |
-| `"Scan canceled by the user"`                           | Scan canceled by the user                   |
-| `"Unknown error"`                                       | Unknown error                                     |
+> **Migration note:** The `error` field (human-readable message string) is preserved from previous versions. The new `code` field (machine-readable constant) was added in this release to enable reliable programmatic error handling without string matching.
+
+#### Error reference
+
+The following errors may be returned by the Socure DocV SDK:
+
+| `code` | `error` message | Description |
+|---|---|---|
+| `ERR_NO_INTERNET` | `"No internet connection"` | Device has no network connectivity. |
+| `ERR_SESSION_INITIATION` | `"Failed to initiate the session"` | The SDK could not start a verification session with Socure servers. |
+| `ERR_CAMERA_PERMISSION` | `"Permissions to open the camera declined by the user"` | The user denied camera access. |
+| `ERR_CONSENT_DECLINED` | `"Consent declined by the user"` | The user declined the consent screen. |
+| `ERR_UPLOAD_FAILURE` | `"Failed to upload the documents"` | Captured images could not be uploaded. |
+| `ERR_INVALID_TOKEN` | `"Invalid transaction token"` | The `docVTransactionToken` is missing, malformed, or already used. |
+| `ERR_INVALID_KEY` | `"Invalid or missing SDK key"` | The `publicKey` (SDK key) is invalid or was not provided. |
+| `ERR_SESSION_EXPIRED` | `"Session expired"` | The verification session timed out before completion. |
+| `ERR_USER_CANCELED` | `"Scan canceled by the user"` | The user dismissed the capture flow before completing it. |
+| `ERR_NO_ACTIVITY` | `"App activity is null"` | Android only — the host `Activity` was not available when the SDK attempted to launch. |
+| `ERR_NO_DATA` | `"No result data returned from SDK"` | Android only — the SDK activity returned without data. |
+| `ERR_NO_VIEW_CONTROLLER` | `"Failed to get root view controller"` | iOS only — the root `UIViewController` could not be resolved. |
+| `ERR_ALREADY_IN_PROGRESS` | `"A DocV session is already in progress"` | A previous call has not yet resolved. Wait for it to complete before launching again. |
+| `ERR_UNKNOWN` | `"Unknown error"` | An unrecognized error occurred. |
+
 

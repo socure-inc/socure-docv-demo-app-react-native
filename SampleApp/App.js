@@ -12,7 +12,10 @@ import {
   Alert,
   Text,
 } from 'react-native';
-import { launchSocureDocV } from '@socure-inc/docv-react-native';
+import { launchSocureDocV, launchSocureDocVWithPromise } from '@socure-inc/docv-react-native';
+
+const docVTransactionToken = 'your transaction token';
+const yourSocureSdkKey = 'your socure sdk key';
 
 export default function App() {
   const [status, setStatus] = useState('');
@@ -23,32 +26,43 @@ export default function App() {
     Platform.OS === 'android' ? ToastAndroid.show(msg, ToastAndroid.SHORT) : Alert.alert(msg);
   }, []);
 
-  const successCallback = useCallback((result) => {
-    const message = `Success: {deviceSessionToken = ${result.deviceSessionToken}}`;
-    notifyMessage(message);
-    console.log(result);
-  }, [notifyMessage]);
-
-  const errorCallback = useCallback((error) => {
-    const message = `Failure: {Error Message: ${error.error}, deviceSessionToken: ${error.deviceSessionToken}}`;
-    notifyMessage(message);
-    console.log(error);
-  }, [notifyMessage]);
-
-  const handleLaunch = () => {
+  const handleLaunchWithCallbacks = () => {
     launchSocureDocV(
-      'docvTransactionToken',
-      'YOUR_SOCURE_SDK_KEY',
+      docVTransactionToken,
+      yourSocureSdkKey,
       useSocureGov,
-      successCallback,
-      errorCallback
+      (result) => {
+        notifyMessage(`Success: {deviceSessionToken = ${result.deviceSessionToken}}`);
+        console.log(result);
+      },
+      (error) => {
+        notifyMessage(`Failure: {Error Message: ${error.error}, code: ${error.code}}`);
+        console.log(error);
+      },
     );
+  };
+
+  const handleLaunchWithPromise = async () => {
+    try {
+      const result = await launchSocureDocVWithPromise(
+        docVTransactionToken,
+        yourSocureSdkKey,
+        useSocureGov,
+      );
+      notifyMessage(`Success: {deviceSessionToken = ${result.deviceSessionToken}}`);
+      console.log(result);
+    } catch (e) {
+      notifyMessage(`Failure: {Error Message: ${e.message}, code: ${e.code}}`);
+      console.log(e);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.text}>{status}</Text>
-      <Button title="Launch Socure DocV" onPress={handleLaunch} />
+      <Button title="Launch Socure DocV (Callback)" onPress={handleLaunchWithCallbacks} />
+      <View style={styles.buttonSpacer} />
+      <Button title="Launch Socure DocV (Promise)" onPress={handleLaunchWithPromise} />
     </View>
   );
 }
@@ -65,5 +79,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     padding: 16,
     marginBottom: 100,
+  },
+  buttonSpacer: {
+    height: 16,
   },
 });
