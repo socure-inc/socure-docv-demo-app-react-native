@@ -14,8 +14,8 @@ import {
 } from 'react-native';
 import { launchSocureDocV, launchSocureDocVWithPromise } from '@socure-inc/docv-react-native';
 
-const docVTransactionToken = '1597f18e-223f-4635-b8c3-c341f56f8e04';
-const yourSocureSdkKey = '7da02d9d-bd7e-4e08-a554-eabb7cb0ded1';
+const docVTransactionToken = 'your transaction token';
+const yourSocureSdkKey = 'your socure sdk key';
 
 export default function App() {
   const [status, setStatus] = useState('');
