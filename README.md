@@ -81,48 +81,92 @@ For the iOS app, you can install the DocV iOS SDK into your project using Cocoap
 
 #### Add project dependencies
 
-In your root project folder, open your Podfile with a text editor and specify the following project dependencies: 
+In your root project folder, open your Podfile with a text editor and specify the following project dependencies:
 
-- Replace the deployment target with `platform :ios, '15.0'`.
-- Add the line pod `'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'`
+- Make sure the deployment target is iOS 15 or later. On React Native 0.79 the standard `platform :ios, min_ios_version_supported` already resolves to 15.1, so no change is needed; otherwise set `platform :ios, '15.0'` explicitly.
+- Add the line `pod 'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'` inside your app target.
 
-Once completed, your Podfile should look like the following example: 
+Once completed, your Podfile should look like the following example. This is the Podfile used by `SampleApp/` in this repository, so it is known to build:
 
-```swift {4,36}
-require_relative '../node_modules/react-native/scripts/react_native_pods'
-require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
-platform :ios, '15.0'
-install! 'cocoapods', :deterministic_uuids => false
-production = ENV["PRODUCTION"] == "1"
-target 'SocureDocVDemo' do
+```ruby {8,69}
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
+
+platform :ios, min_ios_version_supported
+prepare_react_native_project!
+
+linkage = ENV['USE_FRAMEWORKS']
+if linkage != nil
+  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+  use_frameworks! :linkage => linkage.to_sym
+end
+
+target 'DocVReactNativeSample' do
   config = use_native_modules!
-  # Flags change depending on the env values.
-  flags = get_default_flags()
+
   use_react_native!(
     :path => config[:reactNativePath],
-    # to enable hermes on iOS, change `false` to `true` and then install pods
-    :production => production,
-    :hermes_enabled => flags[:hermes_enabled],
-    :fabric_enabled => flags[:fabric_enabled],
-    :flipper_configuration => FlipperConfiguration.enabled,
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
-  target 'SocureDocVDemoTests' do
-    inherit! :complete
-    # Pods for testing
-  end
+
   post_install do |installer|
-    react_native_post_install(installer)
-    __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false,
+      # :ccache_enabled => true
+    )
+
+    # fmt fails under Xcode 26+ Clang (consteval FMT_STRING). base.h redefines
+    # FMT_USE_CONSTEVAL unconditionally, so patch it to honor an external value,
+    # then force it off below. Toolchain workaround; idempotent. Unrelated to
+    # socure-docv-react-native.
+    fmt_base = File.join(installer.sandbox.root, 'fmt', 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      src = File.read(fmt_base)
+      # Turn the chain's opening `#if` into an `#elif` behind our own branch.
+      original_open = "#if !defined(__cpp_lib_is_constant_evaluated)\n#  define FMT_USE_CONSTEVAL 0\n"
+      patched_open  = "#if defined(FMT_USE_CONSTEVAL)\n// honor externally-provided value\n" \
+                      "#elif !defined(__cpp_lib_is_constant_evaluated)\n#  define FMT_USE_CONSTEVAL 0\n"
+      if src.include?(original_open)
+        src = src.sub(original_open, patched_open)
+        File.chmod(0644, fmt_base)  # pod headers are read-only
+        File.write(fmt_base, src)
+        Pod::UI.puts "[fmt] Patched base.h to honor pre-set FMT_USE_CONSTEVAL".green
+      end
+    end
+
+    installer.pods_project.targets.each do |t|
+      if ['fmt', 'glog'].include?(t.name)
+        t.build_configurations.each do |c|
+          defs = c.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || ['$(inherited)']
+          defs = [defs] unless defs.is_a?(Array)
+          defs.delete('FMT_USE_NONTYPE_TEMPLATE_ARGS=0')
+          defs.delete('FMT_CONSTEVAL=')
+          defs << 'FMT_USE_CONSTEVAL=0' unless defs.include?('FMT_USE_CONSTEVAL=0')
+          c.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs
+        end
+      end
+    end
   end
-pod 'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'
+
+  pod 'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'
 end
 ```
 
+Replace `DocVReactNativeSample` with your own target name.
+
+> **Why the `fmt` block?** React Native 0.79's bundled `fmt` dependency does not compile under Xcode 26 or later — the build fails with a `consteval` error in `fmt/format-inl.h`. This is a React Native toolchain issue, not a DocV one, and `fmt` is built before the wrapper, so the failure looks unrelated to where it comes from. Keep the workaround until you move to a React Native release that ships a newer `fmt`. On Xcode 16–25 it is a harmless no-op.
+
 #### Install the dependencies
 
-Change the location of your working directory to the `iOS` folder: 
+Change the location of your working directory to the `ios` folder: 
 
 ```
 cd ios
@@ -134,12 +178,14 @@ Install the Cocoapods dependencies by running the following command:
 pod install
 ```
 
+> **Note:** Use `pod install` directly. If your project was generated from the React Native template it may contain a `Gemfile` pinning an old Ruby version (for example `ruby '2.7.4'`), in which case `bundle exec pod install` aborts with `Bundler::RubyVersionMismatch` on a modern Ruby. This is the case for `SampleApp/` in this repository.
+
 #### Use the CocoaPods-generated `.xcworkspace` file
 
 The CocoaPods installation command generates a `.xcworkspace` file with all the dependencies configured. To continue with the installation, complete the following: 
 
 - Close Xcode and then open your project's `.xcworkspace` file to launch Xcode. From now on, use the `.xcworkspace` to open your project. 
-- Check that your deployment target is set to iOS 13 or later. 
+- Check that your deployment target is set to iOS 15 or later. 
 
 #### Request camera permissions
 
@@ -169,19 +215,22 @@ Using the command line, go to your root project folder and enter the following c
   
 ### Configure your Android app
 
-For the Android app, add your project dependencies by going to the module level `build.gradle` file and making sure the `minSdkVersion` is set to at least 22 and the `compileSdkVersion` is set to at least 33. 
+For the Android app, add your project dependencies by going to the module level `build.gradle` file and making sure the `minSdkVersion` is set to at least 23 and the `compileSdkVersion` is set to at least 36. 
 
-```kotlin {5,6}
+```kotlin {5,6,7}
 buildscript {
               .....
             ext {
                  ....
-                minSdkVersion = 22 
+                minSdkVersion = 23 
                 compileSdkVersion = 36
+                targetSdkVersion = 36
                 .....
             }
 }
 ```
+
+> **Note:** `minSdkVersion` 23 is a hard floor, not a recommendation. The DocV Android SDK (`docv-capture`) declares `minSdkVersion 23` in its manifest, and the Digital Intelligence SDK raised its minimum from API 21 to 23 in version 4.12.0. A lower value fails the Android manifest merger.
 
 ### Camera permissions
 
@@ -402,6 +451,7 @@ The following errors may be returned by the Socure DocV SDK:
 | `ERR_SESSION_INITIATION` | `"Failed to initiate the session"` | The SDK could not start a verification session with Socure servers. |
 | `ERR_CAMERA_PERMISSION` | `"Permissions to open the camera declined by the user"` | The user denied camera access. |
 | `ERR_CONSENT_DECLINED` | `"Consent declined by the user"` | The user declined the consent screen. |
+| `ERR_GUARDIAN_CONSENT_DECLINED` | `"Consent declined by the guardian"` | The guardian declined consent on behalf of a minor. |
 | `ERR_UPLOAD_FAILURE` | `"Failed to upload the documents"` | Captured images could not be uploaded. |
 | `ERR_INVALID_TOKEN` | `"Invalid transaction token"` | The `docVTransactionToken` is missing, malformed, or already used. |
 | `ERR_INVALID_KEY` | `"Invalid or missing SDK key"` | The `publicKey` (SDK key) is invalid or was not provided. |
