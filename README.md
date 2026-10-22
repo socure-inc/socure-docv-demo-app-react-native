@@ -4,6 +4,32 @@ The Predictive Document Verification (DocV) SDK for React Native is a React Nati
 
 >Note: Document verification services will be disabled for older SDK versions soon. All SDK integrations must be updated to version **3.1.0 or later** to meet compliance requirements.
 
+This repository also contains `SampleApp/`, a runnable React Native demo app that integrates the wrapper. See [Running Tests and Verifying the Sample App](#running-tests-and-verifying-the-sample-app) for how it is verified.
+
+## External Dependencies
+
+The SDK and the sample app depend on the following external services at runtime. None are optional — document verification cannot complete without them.
+
+| Dependency | Type | Used for |
+|---|---|---|
+| **Socure Predictive DocV API** — `POST https://service.socure.com/api/5.0/documents/request` | Third-party API (Socure) | Issues the `docVTransactionToken` that the SDK requires to start a session. Called from **your backend**, not from the app. See [Generate a transaction token](#generate-a-transaction-token-and-configure-the-capture-app). |
+| **Socure Capture App** — `https://verify.socure.com` | Socure hosted service | The document capture and upload flow the SDK drives. Its per-transaction URL is returned in the `/documents/request` response. Flow customization is configured in Admin Dashboard via `useCaseKey`. |
+| **Socure ID+ API** — [API reference](https://developer.socure.com/reference#tag/ID+/operation/ID+) | Third-party API (Socure) | Retrieves the verification results after a consumer completes capture. Called from **your backend** using the returned session token. |
+| **Socure Digital Intelligence (Device Risk) service** | Third-party API (Socure) | Device and behavioral telemetry collected by the bundled Digital Intelligence SDK. Produces the `deviceSessionToken` returned on success. Required for all DocV v5 integrations. |
+| **Socure Admin Dashboard** — `https://developer.socure.com` | Socure console | Source of the ID+ API key and the SDK key (`publicKey`), IP allowlisting, and Capture App flow configuration. |
+| **Device camera and network access** | Device capability | Capturing identity documents and uploading them. The SDK requests camera permission on first launch. |
+
+The following are required to **build** the project, but are not runtime dependencies of the shipped app:
+
+| Dependency | Used for |
+|---|---|
+| npm registry — `@socure-inc/docv-react-native` | The React Native wrapper package. |
+| CocoaPods CDN — `SocureDocV`, `SocureDeviceRisk` | iOS native SDKs, resolved from the wrapper's podspec. |
+| Socure Maven repository — `https://sdk.socure.com` | Android native SDK (`com.socure.android:docv-capture`). |
+| Maven Central / Google Maven | Android transitive dependencies. |
+
+> **Note:** There is no database, queue, or object store in this project. The sample app holds no persistent state; all verification state lives in the Socure services above.
+
 ## Minimum Requirements
 
 Before getting started, check that your development environment meets the following requirements:
@@ -386,5 +412,96 @@ The following errors may be returned by the Socure DocV SDK:
 | `ERR_NO_VIEW_CONTROLLER` | `"Failed to get root view controller"` | iOS only — the root `UIViewController` could not be resolved. |
 | `ERR_ALREADY_IN_PROGRESS` | `"A DocV session is already in progress"` | A previous call has not yet resolved. Wait for it to complete before launching again. |
 | `ERR_UNKNOWN` | `"Unknown error"` | An unrecognized error occurred. |
+
+## Running Tests and Verifying the Sample App
+
+### Automated tests
+
+**The sample app in `SampleApp/` has no automated test suite.** It is a manual integration demo, and it is verified by running it against the real Socure services as described below.
+
+`SampleApp/package.json` carries `test` and `lint` scripts inherited from the React Native project template, but neither is functional as shipped:
+
+| Command | Current result |
+|---|---|
+| `yarn test` | Exits **1** — Jest reports `No tests found` (no `__tests__` directory or `*.test.*` files exist). |
+| `yarn lint` | Exits **2** — ESLint finds no configuration file in the project or its ancestors. |
+
+Treat these as unimplemented rather than failing. Do not gate CI on them until test files and an ESLint config are added.
+
+Automated tests for the JavaScript API surface live in the **wrapper package repository**, not here. In a checkout of `@socure-inc/docv-react-native`:
+
+```bash
+yarn test        # Jest — 14 tests covering launchSocureDocV / launchSocureDocVWithPromise
+yarn typescript  # tsc type check
+yarn lint        # ESLint
+```
+
+Those cover argument forwarding to the TurboModule, promise resolution and rejection, and the "package not linked" error path.
+
+### Verifying the sample app manually
+
+This is the actual verification procedure for this repository. Each step has a check that must pass before continuing.
+
+**1. Install dependencies**
+
+```bash
+cd SampleApp
+yarn install
+cd ios && pod install && cd ..
+```
+
+Confirm the wrapper resolved from the npm registry rather than a local checkout — a symlink here means you are not testing the published package:
+
+```bash
+ls -ld node_modules/@socure-inc/docv-react-native   # must be a directory, not a symlink
+grep '"version"' node_modules/@socure-inc/docv-react-native/package.json
+```
+
+**2. Build**
+
+```bash
+yarn ios        # or: npx react-native run-ios
+```
+
+Expect `BUILD SUCCEEDED`. For Android, use `yarn android`.
+
+**3. Confirm the JavaScript bundle resolves**
+
+With Metro running (`yarn start`), in a second shell:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  "http://localhost:8081/index.bundle?platform=ios&dev=true&minify=false"
+```
+
+Expect `200`. A `500` with *"Unable to resolve module @socure-inc/docv-react-native"* means the dependency is not installed correctly.
+
+**4. Launch and drive the app**
+
+The app renders two buttons, **Launch Socure DocV (Callback)** and **Launch Socure DocV (Promise)**, which exercise the two public APIs. Tap each one.
+
+**5. Interpret the result**
+
+`App.js` ships placeholder credentials, so with an unmodified checkout the expected outcome is an **error**, not a success — and which error tells you whether the native bridge works:
+
+| Result | Meaning |
+|---|---|
+| `ERR_INVALID_TOKEN` — *"Invalid transaction token"* | ✅ **Pass.** The call reached the native SDK, which rejected the placeholder token. This confirms the module is linked, the native bridge works, and the SDK initialized. |
+| `ERR_INVALID_KEY` | ✅ Pass for bridge purposes — replace `yourSocureSdkKey` with a real SDK key. |
+| `ERR_NO_VIEW_CONTROLLER` / `ERR_NO_ACTIVITY` | ❌ The bridge ran but could not resolve a host view controller or activity. |
+| Red error screen, or *"doesn't seem to be linked"* | ❌ The native module was not registered. Re-run `pod install` and rebuild; this is a linking problem, not an SDK problem. |
+
+**6. End-to-end verification with real credentials**
+
+To verify the complete flow rather than just the bridge, generate a real transaction token per [Generate a transaction token and configure the Capture App](#generate-a-transaction-token-and-configure-the-capture-app), then replace both placeholders in `SampleApp/App.js`:
+
+```javascript
+const docVTransactionToken = 'your transaction token';
+const yourSocureSdkKey = 'your socure sdk key';
+```
+
+A successful run completes the capture flow and returns a `deviceSessionToken`. To fetch the verification results, call the ID+ endpoint — see the [API Reference documentation](https://developer.socure.com/reference#tag/ID+/operation/ID+) on DevHub.
+
+> **Note:** Your IP address must be allowlisted in Admin Dashboard before `/documents/request` will succeed.
 
 
