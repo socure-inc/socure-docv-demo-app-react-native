@@ -14,8 +14,8 @@ Before getting started, check that your development environment meets the follow
 
 **iOS**
 
-- Xcode version 14.1+
-- Support for iOS 13 and later
+- Xcode version 16.1+
+- Support for iOS 15 and later
 
 **Android**
 
@@ -57,7 +57,7 @@ For the iOS app, you can install the DocV iOS SDK into your project using Cocoap
 
 In your root project folder, open your Podfile with a text editor and specify the following project dependencies: 
 
-- Replace the deployment target with `platform :ios, '13.0'`.
+- Replace the deployment target with `platform :ios, '15.0'`.
 - Add the line pod `'socure-docv-react-native', :path => '../node_modules/@socure-inc/docv-react-native'`
 
 Once completed, your Podfile should look like the following example: 
@@ -65,7 +65,7 @@ Once completed, your Podfile should look like the following example:
 ```swift {4,36}
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
-platform :ios, '13.0'
+platform :ios, '15.0'
 install! 'cocoapods', :deterministic_uuids => false
 production = ENV["PRODUCTION"] == "1"
 target 'SocureDocVDemo' do
