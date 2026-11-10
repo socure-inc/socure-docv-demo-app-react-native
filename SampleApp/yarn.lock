@@ -1977,10 +1977,10 @@
   dependencies:
     "@sinonjs/commons" "^3.0.0"
 
-"@socure-inc/docv-react-native@5.1.6":
-  version "5.1.6"
-  resolved "https://registry.npmjs.org/@socure-inc/docv-react-native/-/docv-react-native-5.1.6.tgz"
-  integrity sha512-0BKBoPW2HDeYqQRrUcuDrIP/LGZw2SdDLVMttSyVgod9nAaSjL/yNu9S7zv123Fcp3PVXDF6WcYxvUHQPWbHbw==
+"@socure-inc/docv-react-native@5.5.2":
+  version "5.5.2"
+  resolved "https://registry.yarnpkg.com/@socure-inc/docv-react-native/-/docv-react-native-5.5.2.tgz#4878663f5142251a6f9ab1cf0f748359c1acfeb3"
+  integrity sha512-c8Duw0A/8/KY29s4A24vzIDH5QdieHpSWDKUMWcKddO5XUqwPRHM7ONmf4BOo4qTPOALofrrfLtoKg9dQ6+9HA==
 
 "@types/babel__core@^7.1.14":
   version "7.20.5"

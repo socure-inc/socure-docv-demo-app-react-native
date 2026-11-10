@@ -11,6 +11,7 @@
 		2DCF25172F48FAC10013CDC7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2DCF25132F48FAC10013CDC7 /* LaunchScreen.storyboard */; };
 		2DCF25182F48FAC10013CDC7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 2DCF25142F48FAC10013CDC7 /* PrivacyInfo.xcprivacy */; };
 		2DCF25192F48FAC10013CDC7 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2DCF25112F48FAC10013CDC7 /* Images.xcassets */; };
+		6E63CE858B2344D2317089D8 /* SocureDocV in Frameworks */ = {isa = PBXBuildFile; productRef = 9E3EF18557C4CC42F16D3DB1 /* SocureDocV */; };
 		E421742D846BD08A9E1F28B7 /* libPods-DocVReactNativeSample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DF4300F2C070C2722AB62F60 /* libPods-DocVReactNativeSample.a */; };
 /* End PBXBuildFile section */
 
@@ -35,6 +36,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E421742D846BD08A9E1F28B7 /* libPods-DocVReactNativeSample.a in Frameworks */,
+				6E63CE858B2344D2317089D8 /* SocureDocV in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,6 +124,9 @@
 			dependencies = (
 			);
 			name = DocVReactNativeSample;
+			packageProductDependencies = (
+				9E3EF18557C4CC42F16D3DB1 /* SocureDocV */,
+			);
 			productName = HelloWorld;
 			productReference = 13B07F961A680F5B00A75B9A /* DocVReactNativeSample.app */;
 			productType = "com.apple.product-type.application";
@@ -148,6 +153,9 @@
 				Base,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
+			packageReferences = (
+				FC77A91DA24D6329C29C3922 /* XCRemoteSwiftPackageReference "socure-docv-sdk-ios" */,
+			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -499,6 +507,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FC77A91DA24D6329C29C3922 /* XCRemoteSwiftPackageReference "socure-docv-sdk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/socure-inc/socure-docv-sdk-ios";
+			requirement = {
+				kind = exactVersion;
+				version = 5.7.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9E3EF18557C4CC42F16D3DB1 /* SocureDocV */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC77A91DA24D6329C29C3922 /* XCRemoteSwiftPackageReference "socure-docv-sdk-ios" */;
+			productName = SocureDocV;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }

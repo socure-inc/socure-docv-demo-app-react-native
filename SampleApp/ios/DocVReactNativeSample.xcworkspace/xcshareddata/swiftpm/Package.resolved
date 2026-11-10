@@ -1,0 +1,24 @@
+{
+  "originHash" : "2f4af0fece6c5aad484399f59350e60554f910dedeaa3a9bcd085df196821ba9",
+  "pins" : [
+    {
+      "identity" : "socure-docv-sdk-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/socure-inc/socure-docv-sdk-ios",
+      "state" : {
+        "revision" : "5a714d9c86b42d8c6bdeaa7f0402ec6f0503e956",
+        "version" : "5.7.1"
+      }
+    },
+    {
+      "identity" : "socure-sigmadevice-sdk-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/socure-inc/socure-sigmadevice-sdk-ios",
+      "state" : {
+        "revision" : "3fb913365fc1c736b834fbc338e9ea730bc04bd2",
+        "version" : "4.11.0"
+      }
+    }
+  ],
+  "version" : 3
+}
