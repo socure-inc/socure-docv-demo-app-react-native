@@ -2,7 +2,7 @@
 
 The Predictive Document Verification (DocV) SDK for React Native is a React Native wrapper that allows you to use the DocV SDK for Android and iOS in your React Native application. 
 
->Note: Document verification services will be disabled for older SDK versions soon. All SDK integrations must be updated to version **3.1.0 or later** to meet compliance requirements.
+>Note: Document verification services will be disabled for older SDK versions soon. All SDK integrations must be updated to version **5.0.0 or later** to meet compliance requirements.
 
 This repository also contains `SampleApp/`, a runnable React Native demo app that integrates the wrapper. See [Running Tests and Verifying the Sample App](#running-tests-and-verifying-the-sample-app) for how it is verified.
 
@@ -24,8 +24,9 @@ The following are required to **build** the project, but are not runtime depende
 | Dependency | Used for |
 |---|---|
 | npm registry — `@socure-inc/docv-react-native` | The React Native wrapper package. |
-| CocoaPods CDN — `SocureDocV`, `SocureDeviceRisk` | iOS native SDKs, resolved from the wrapper's podspec. |
-| Socure Maven repository — `https://sdk.socure.com` | Android native SDK (`com.socure.android:docv-capture`). |
+| Swift Package Manager — [`socure-docv-sdk-ios`](https://github.com/socure-inc/socure-docv-sdk-ios) | iOS native SDKs (`SocureDocV`, plus [`DeviceRisk`](https://github.com/socure-inc/socure-sigmadevice-sdk-ios) transitively). Declared by the wrapper's podspec via `spm_dependency` and linked by the app target. Socure's CocoaPods distribution was deprecated in November 2026. Requires reachable `github.com/socure-inc` **and** `sdk.socure.com` at package-resolution time — the package manifests are on GitHub, the `.xcframework` binaries are downloaded from `sdk.socure.com`. |
+| CocoaPods CDN — React Native pods | React Native's iOS core and the `socure-docv-react-native` wrapper pod. The DocV SDK itself is **not** a pod. |
+| Socure Maven repository — `https://sdk.socure.com` | Android native SDK (`com.socure.android:docv-capture`), and the iOS `.xcframework` binaries fetched by SPM. |
 | Maven Central / Google Maven | Android transitive dependencies. |
 
 > **Note:** There is no database, queue, or object store in this project. The sample app holds no persistent state; all verification state lives in the Socure services above.
@@ -42,6 +43,11 @@ Before getting started, check that your development environment meets the follow
 
 - Xcode version 16.1+
 - Support for iOS 15 and later
+- The DocV iOS SDK is resolved with **Swift Package Manager**, not CocoaPods. This needs
+  wrapper version **5.5.1 or later** (5.5.0 and earlier resolved the SDK through the
+  now-deprecated `SocureDocV` / `SocureDeviceRisk` pods), and it relies on React Native's
+  `spm_dependency` podspec helper, present in all supported React Native versions (0.79.0+).
+- Keep the default static pod linkage. `USE_FRAMEWORKS=dynamic` is not supported.
 
 **Android**
 
@@ -77,7 +83,12 @@ Your React Native project needs to access the DocV iOS or Android SDKs through t
 
 ### Configure your iOS app
 
-For the iOS app, you can install the DocV iOS SDK into your project using Cocoapods. If you do not already have the CocoaPods tool installed, see the [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html#installation). 
+The iOS integration uses two package managers:
+
+- **Swift Package Manager** supplies the DocV iOS SDK itself (`SocureDocV`, plus `DeviceRisk` transitively). Socure deprecated its CocoaPods distribution in November 2026, so the SDK is no longer a pod and must not be added to your `Podfile`.
+- **CocoaPods** supplies React Native's iOS core and the `socure-docv-react-native` wrapper pod. If you do not already have the CocoaPods tool installed, see the [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html#installation).
+
+After `pod install`, you must also link the Swift package product from your **app target** — see [Add the DocV iOS SDK Swift package](#add-the-docv-ios-sdk-swift-package) below. `SampleApp/` already has this committed in its `.xcodeproj`.
 
 #### Add project dependencies
 
@@ -186,6 +197,64 @@ The CocoaPods installation command generates a `.xcworkspace` file with all the 
 
 - Close Xcode and then open your project's `.xcworkspace` file to launch Xcode. From now on, use the `.xcworkspace` to open your project. 
 - Check that your deployment target is set to iOS 15 or later. 
+
+#### Add the DocV iOS SDK Swift package
+
+`pod install` resolves the `SocureDocV` Swift package and exposes it to the wrapper's
+pod target, which is enough to *compile*. To also get `SocureDocV.framework` and
+`DeviceRisk.framework` **embedded into your `.app`**, the package product must be
+linked by your app target. Without this the app builds successfully but crashes on
+launch with `dyld: Library not loaded: @rpath/SocureDocV.framework/SocureDocV`.
+
+Do this once, in the `.xcworkspace`:
+
+1. Select your project in the Project navigator, then select your **app target**.
+2. Open the **General** tab and find **Frameworks, Libraries, and Embedded Content**.
+3. Click **+**, then **Add Other… → Add Package Dependency…**.
+4. Enter `https://github.com/socure-inc/socure-docv-sdk-ios`, choose **Exact Version**
+   and enter the version the wrapper pins — **5.7.1** for wrapper 5.5.1–5.5.2. Select
+   **Add Package**.
+5. Select the **SocureDocV** product and add it to your app target.
+
+The authoritative pin is the `spm_dependency` block in the wrapper's
+`socure-docv-react-native.podspec`; read it from your installed copy so the two cannot
+drift apart:
+
+```bash
+grep -A4 spm_dependency \
+  SampleApp/node_modules/@socure-inc/docv-react-native/socure-docv-react-native.podspec
+```
+
+Matching it matters: the pod target and the app target resolve the same package, so a
+mismatch surfaces as an SPM version-conflict error at build time.
+
+Xcode embeds and signs Swift package products automatically, so there is no
+**Embed & Sign** setting to change. `DeviceRisk` is resolved and embedded
+transitively — do not add it yourself.
+
+The result is stored in your `.xcodeproj` and survives later `pod install` runs.
+`SampleApp/` in this repository already has it committed, along with the pinned
+versions in `SampleApp/ios/DocVReactNativeSample.xcworkspace/xcshareddata/swiftpm/Package.resolved`.
+
+> **Note:** keep the default static pod linkage. `USE_FRAMEWORKS=dynamic` is not
+> supported by the wrapper.
+
+##### Upgrading from wrapper 5.5.0 or earlier
+
+`5.5.1` is the first release that resolves the iOS SDK through SPM; `5.5.0` and earlier
+used the `SocureDocV` and `SocureDeviceRisk` CocoaPods. If you are moving up from one of
+those:
+
+- **Nothing to remove from your `Podfile`.** The SDK was never listed there — it arrived
+  as a transitive dependency of the wrapper's podspec. `pod install` drops the two pods
+  on its own, reporting `Removing SocureDocV` / `Removing SocureDeviceRisk`.
+- **Do** add the app-target package reference described above. This is the one manual
+  step, and skipping it is the failure mode called out at the top of this section: a
+  clean build that crashes the instant it launches.
+- Re-run `pod install` after bumping the wrapper, then build.
+
+Going the other way, if you pin `5.5.0` or earlier, omit the app-target package
+reference entirely and let the pods supply the SDK.
 
 #### Request camera permissions
 
@@ -515,7 +584,48 @@ yarn ios        # or: npx react-native run-ios
 
 Expect `BUILD SUCCEEDED`. For Android, use `yarn android`.
 
-**3. Confirm the JavaScript bundle resolves**
+**3. Confirm the iOS SDK came from SPM and is embedded**
+
+`BUILD SUCCEEDED` alone does not prove the iOS integration is sound — a missing
+app-target package reference compiles and links cleanly, then fails at launch. Check all
+three of the following.
+
+The two Socure pods must be **absent** — their presence means the SDK is still arriving
+through CocoaPods:
+
+```bash
+ls ios/Pods | grep -i socure        # expect no output
+```
+
+SPM must have resolved both packages:
+
+```bash
+python3 -c "import json;[print(p['identity'],p['state']['version']) for p in json.load(open('ios/DocVReactNativeSample.xcworkspace/xcshareddata/swiftpm/Package.resolved'))['pins']]"
+# expect: socure-docv-sdk-ios 5.7.1
+#         socure-sigmadevice-sdk-ios 4.11.0
+```
+
+And both frameworks must be embedded in the built app:
+
+```bash
+APP=$(ls -dt ~/Library/Developer/Xcode/DerivedData/DocVReactNativeSample-*/Build/Products/Debug-iphonesimulator/DocVReactNativeSample.app | head -1)
+stat -f '%Sm  %N' "$APP"     # check this timestamp is from the build you just ran
+ls "$APP/Frameworks"
+# expect: DeviceRisk.framework, SocureDocV.framework (plus hermes.framework)
+```
+
+Check that timestamp before trusting the result. A `DerivedData` directory left over from
+an older build is easy to mistake for the current one, and a pre-SPM bundle is especially
+misleading: it contains `SocureDocV.framework` but no `DeviceRisk.framework`, because the
+old `SocureDocV` pod embedded its own framework. `ls -dt` sorts newest-first to make the
+common case right, but it cannot tell you whether the newest build is *yours*.
+
+If `SocureDocV.framework` is missing, the app-target package reference was not added — see
+[Add the DocV iOS SDK Swift package](#add-the-docv-ios-sdk-swift-package). If
+`DeviceRisk.framework` is missing but `SocureDocV.framework` is present, you are almost
+certainly looking at a stale pre-SPM bundle rather than a broken build.
+
+**4. Confirm the JavaScript bundle resolves**
 
 With Metro running (`yarn start`), in a second shell:
 
@@ -526,11 +636,11 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 
 Expect `200`. A `500` with *"Unable to resolve module @socure-inc/docv-react-native"* means the dependency is not installed correctly.
 
-**4. Launch and drive the app**
+**5. Launch and drive the app**
 
 The app renders two buttons, **Launch Socure DocV (Callback)** and **Launch Socure DocV (Promise)**, which exercise the two public APIs. Tap each one.
 
-**5. Interpret the result**
+**6. Interpret the result**
 
 `App.js` ships placeholder credentials, so with an unmodified checkout the expected outcome is an **error**, not a success — and which error tells you whether the native bridge works:
 
@@ -541,7 +651,7 @@ The app renders two buttons, **Launch Socure DocV (Callback)** and **Launch Socu
 | `ERR_NO_VIEW_CONTROLLER` / `ERR_NO_ACTIVITY` | ❌ The bridge ran but could not resolve a host view controller or activity. |
 | Red error screen, or *"doesn't seem to be linked"* | ❌ The native module was not registered. Re-run `pod install` and rebuild; this is a linking problem, not an SDK problem. |
 
-**6. End-to-end verification with real credentials**
+**7. End-to-end verification with real credentials**
 
 To verify the complete flow rather than just the bridge, generate a real transaction token per [Generate a transaction token and configure the Capture App](#generate-a-transaction-token-and-configure-the-capture-app), then replace both placeholders in `SampleApp/App.js`:
 
